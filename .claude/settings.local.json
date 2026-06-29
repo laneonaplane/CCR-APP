@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git --version)",
+      "Bash(git -C \"C:\\\\Users\\\\Lane\\\\Desktop\\\\CCR APP\" status)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
