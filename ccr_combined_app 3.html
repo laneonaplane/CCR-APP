@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cross Current Racing — Engineering</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --bg:#0a0a0c; --surface:#111116; --surface2:#18181f; --border:#2a2a35;
+    --accent:#e8ff47; --accent2:#4ade80; --text:#f0f0f0; --muted:#6b6b80;
+    --danger:#ff4747; --hyp:#d946ef; --hyp-dim:rgba(217,70,239,0.1);
+    --gt3:#e8ff47; --gt3-dim:rgba(232,255,71,0.08);
+    --font:'SF Mono','Fira Code',monospace; --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; }
+
+  /* ── HEADER ── */
+  .header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; display:flex; align-items:center; justify-content:space-between; height:52px; position:sticky; top:0; z-index:100; }
+  .logo { font-family:var(--font); font-size:13px; letter-spacing:.15em; color:var(--accent); text-transform:uppercase; }
+  .logo span { color:var(--muted); }
+
+  /* ── CLASS SWITCHER ── */
+  .class-switcher { display:flex; gap:6px; }
+  .class-btn { background:none; border:1px solid var(--border); color:var(--muted); font-size:12px; font-weight:600; padding:5px 14px; border-radius:20px; cursor:pointer; font-family:var(--sans); letter-spacing:.04em; transition:all .15s; }
+  .class-btn.active-gt3 { background:var(--gt3-dim); border-color:var(--accent); color:var(--accent); }
+  .class-btn.active-hyp { background:var(--hyp-dim); border-color:var(--hyp); color:var(--hyp); }
+  .class-btn:hover { border-color:var(--text); color:var(--text); }
+
+  /* ── CLASS BADGE BAR ── */
+  .class-bar { padding:8px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; font-size:12px; }
+  .class-bar.bar-gt3 { background:rgba(232,255,71,0.04); border-bottom-color:#3a3a20; }
+  .class-bar.bar-hyp { background:rgba(217,70,239,0.04); border-bottom-color:#3a2040; }
+  .class-pill { font-family:var(--font); font-size:11px; font-weight:600; padding:2px 10px; border-radius:20px; letter-spacing:.05em; }
+  .pill-gt3 { background:var(--gt3-dim); border:1px solid var(--accent); color:var(--accent); }
+  .pill-hyp { background:var(--hyp-dim); border:1px solid var(--hyp); color:var(--hyp); }
+  .bar-desc { color:var(--muted); font-size:12px; }
+
+  /* ── NAV ── */
+  .nav { display:flex; gap:4px; padding:0 24px; background:var(--surface); border-bottom:1px solid var(--border); }
+  .nav-btn { background:none; border:none; color:var(--muted); font-size:13px; padding:10px 14px; border-bottom:2px solid transparent; cursor:pointer; transition:all .15s; font-family:var(--sans); }
+  .nav-btn:hover { color:var(--text); }
+  .nav-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .nav-btn.active-hyp-tab { color:var(--hyp); border-bottom-color:var(--hyp); }
+
+  /* ── MAIN ── */
+  .main { max-width:1100px; margin:0 auto; padding:24px 20px; }
+  .class-view { display:none; }
+  .class-view.active { display:block; }
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ── COMPONENTS ── */
+  .section-label { font-family:var(--font); font-size:10px; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; margin-bottom:12px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .stat { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+  .stat-label { font-size:11px; color:var(--muted); letter-spacing:.05em; margin-bottom:6px; }
+  .stat-value { font-family:var(--font); font-size:22px; color:var(--text); font-weight:600; }
+  .stat-value.gt3-color { color:var(--accent); }
+  .stat-value.hyp-color { color:var(--hyp); }
+  .stat-value.green { color:var(--accent2); }
+
+  /* FORM */
+  .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .form-group { display:flex; flex-direction:column; gap:6px; }
+  .form-group.full { grid-column:1/-1; }
+  label { font-size:12px; color:var(--muted); letter-spacing:.05em; }
+  input,select,textarea { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-size:14px; padding:9px 12px; font-family:var(--sans); transition:border-color .15s; outline:none; width:100%; }
+  input:focus,select:focus,textarea:focus { border-color:var(--accent); }
+  .hyp-focus input:focus,.hyp-focus select:focus,.hyp-focus textarea:focus { border-color:var(--hyp); }
+  select option { background:var(--surface2); }
+  textarea { resize:vertical; min-height:80px; }
+  .slider-row { display:flex; align-items:center; gap:12px; }
+  input[type=range] { flex:1; accent-color:var(--accent); }
+  .slider-val { font-family:var(--font); font-size:16px; color:var(--accent); min-width:24px; text-align:right; }
+  .btn { border:none; border-radius:7px; padding:11px 24px; font-size:14px; font-weight:600; cursor:pointer; transition:all .15s; font-family:var(--sans); }
+  .btn-gt3 { background:var(--accent); color:#0a0a0c; }
+  .btn-gt3:hover { background:#f5ff6e; transform:translateY(-1px); }
+  .btn-hyp { background:var(--hyp); color:#fff; }
+  .btn-hyp:hover { background:#e879f9; transform:translateY(-1px); }
+  .btn-ghost { background:none; border:1px solid var(--border); color:var(--text); border-radius:7px; padding:9px 18px; font-size:13px; cursor:pointer; font-family:var(--sans); transition:all .15s; width:100%; margin-top:12px; }
+  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+  .form-section-title { font-size:13px; font-weight:600; color:var(--text); margin:16px 0 10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+
+  /* TABLE */
+  .rank-table { width:100%; border-collapse:collapse; }
+  .rank-table th { font-size:11px; color:var(--muted); letter-spacing:.08em; text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); font-weight:500; }
+  .rank-table td { padding:12px 12px; border-bottom:1px solid rgba(42,42,53,.5); font-size:14px; }
+  .rank-table tr:last-child td { border-bottom:none; }
+  .rank-table tr:hover td { background:rgba(255,255,255,.02); }
+  .rank-num { font-family:var(--font); font-size:12px; color:var(--muted); }
+  .score-bar { height:4px; background:var(--border); border-radius:2px; flex:1; overflow:hidden; }
+  .score-bar-fill { height:100%; border-radius:2px; transition:width .6s ease; }
+  .fill-gt3 { background:var(--accent); }
+  .fill-hyp { background:var(--hyp); }
+
+  /* CHIPS */
+  .track-chips { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+  .chip { background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:12px; cursor:pointer; transition:all .15s; color:var(--muted); }
+  .chip:hover { border-color:var(--accent); color:var(--text); }
+  .chip.active-gt3 { background:var(--gt3-dim); border-color:var(--accent); color:var(--accent); }
+  .chip.active-hyp { background:var(--hyp-dim); border-color:var(--hyp); color:var(--hyp); }
+
+  /* MISC */
+  .toast { position:fixed; bottom:24px; right:24px; background:var(--accent2); color:#0a0a0c; padding:12px 20px; border-radius:8px; font-size:14px; font-weight:600; transform:translateY(80px); opacity:0; transition:all .3s; z-index:200; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .car-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .session-item { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .session-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+  .empty { color:var(--muted); font-size:13px; padding:12px 0; }
+
+  /* REFERENCE */
+  .track-ref-header { display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--surface2); border-bottom:1px solid var(--border); }
+  .track-ref-name { font-weight:600; font-size:13px; }
+  .track-ref-meta { font-size:11px; color:var(--muted); }
+  .ref-divider { height:1px; background:var(--border); }
+  .ref-note { font-size:11px; color:var(--muted); padding:7px 16px; border-top:1px solid var(--border); background:var(--bg); }
+  .ref-source-bar { font-size:10px; color:var(--muted); padding:10px 16px; border-top:1px solid var(--border); background:var(--bg); }
+  .lap-chip { font-family:var(--font); font-size:11px; color:var(--muted); background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:1px 6px; white-space:nowrap; }
+
+  @media(max-width:700px){
+    .grid-2,.grid-4,.form-grid { grid-template-columns:1fr; }
+    .main { padding:12px; }
+    .header { padding:0 12px; }
+    .nav { padding:0 8px; overflow-x:auto; }
+    .class-bar { padding:8px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">CCR <span>/</span> Cross Current Racing</div>
+  <div class="class-switcher">
+    <button class="class-btn active-gt3" id="btn-gt3" onclick="switchClass('gt3')">LMGT3</button>
+    <button class="class-btn" id="btn-hyp" onclick="switchClass('hyp')">Hypercar</button>
+  </div>
+</div>
+
+<!-- GT3 CLASS -->
+<div class="class-view active" id="view-gt3">
+  <div class="class-bar bar-gt3">
+    <span class="class-pill pill-gt3">LMGT3</span>
+    <span class="bar-desc">GT3-based customer racing class · Aston Martin · BMW · Ferrari · Ford · Lamborghini · McLaren · Mercedes · Porsche · Corvette</span>
+  </div>
+  <div class="nav" id="nav-gt3">
+    <button class="nav-btn active" onclick="showPage('gt3','dashboard',this)">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('gt3','submit',this)">Log Test</button>
+    <button class="nav-btn" onclick="showPage('gt3','rankings',this)">Rankings</button>
+    <button class="nav-btn" onclick="showPage('gt3','sessions',this)">Sessions</button>
+    <button class="nav-btn" onclick="showPage('gt3','reference',this)">Car Reference</button>
+  </div>
+  <div class="main">
+
+    <!-- GT3 DASHBOARD -->
+    <div class="page active" id="gt3-page-dashboard">
+      <div class="section-label">LMGT3 · Team overview</div>
+      <div class="grid-4" style="margin-bottom:20px">
+        <div class="stat"><div class="stat-label">Sessions logged</div><div class="stat-value gt3-color" id="g-stat-sessions">0</div></div>
+        <div class="stat"><div class="stat-label">Cars tested</div><div class="stat-value" id="g-stat-cars">0</div></div>
+        <div class="stat"><div class="stat-label">Tracks covered</div><div class="stat-value" id="g-stat-tracks">0</div></div>
+        <div class="stat"><div class="stat-label">Top car overall</div><div class="stat-value green" id="g-stat-top" style="font-size:14px">—</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-label">Rankings by track</div>
+          <div class="track-chips" id="g-dash-chips"></div>
+          <div id="g-dash-rankings"></div>
+        </div>
+        <div class="card">
+          <div class="section-label">Recent sessions</div>
+          <div id="g-dash-recent"></div>
+          <button class="btn-ghost" onclick="showPage('gt3','submit',document.querySelectorAll('#nav-gt3 .nav-btn')[1])">+ Log new test session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GT3 SUBMIT -->
+    <div class="page" id="gt3-page-submit">
+      <div class="section-label">LMGT3 · Log test session</div>
+      <div class="card">
+        <div class="form-section-title">Session details</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Driver</label><input type="text" id="g-driver" placeholder="Your name"></div>
+          <div class="form-group"><label>Driver level</label>
+            <select id="g-level"><option value="elite">Elite (×1.2)</option><option value="advanced">Advanced (×1.1)</option><option value="intermediate" selected>Intermediate (×1.0)</option><option value="developing">Developing (×0.9)</option><option value="novice">Novice (×0.8)</option></select>
+          </div>
+          <div class="form-group"><label>Track</label>
+            <select id="g-track">
+              <option value="">Select track...</option>
+              <option>Circuit de la Sarthe</option><option>Spa-Francorchamps</option><option>Monza</option><option>Silverstone</option><option>Nürburgring</option><option>Fuji Speedway</option><option>Portimão</option><option>Bahrain</option><option>São Paulo</option><option>Austin (COTA)</option><option>Imola</option><option>Lusail</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Car</label>
+            <select id="g-car">
+              <option value="">Select car...</option>
+              <option>Aston Martin Vantage AMR GT3 Evo</option><option>BMW M4 GT3</option><option>Ferrari 296 GT3</option><option>Ford Mustang GT3</option><option>Lamborghini Huracán GT3 Evo2</option><option>McLaren 720S GT3 Evo</option><option>Mercedes-AMG GT3 Evo</option><option>Porsche 911 GT3 R (992)</option><option>Chevrolet Corvette Z06 GT3.R</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Session type</label><select id="g-session"><option>Practice</option><option>Qualifying</option><option>Race Sim</option><option>Tyre Test</option><option>Setup Run</option></select></div>
+          <div class="form-group"><label>Weather</label><select id="g-weather"><option>Dry</option><option>Damp</option><option>Wet</option><option>Mixed</option></select></div>
+        </div>
+        <div class="form-section-title">Lap data</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Best lap (M:SS.mmm)</label><input type="text" id="g-best" placeholder="1:58.432"></div>
+          <div class="form-group"><label>Average lap (M:SS.mmm)</label><input type="text" id="g-avg" placeholder="2:01.154"></div>
+          <div class="form-group"><label>Laps completed</label><input type="number" id="g-laps" placeholder="20" min="1"></div>
+          <div class="form-group"><label>Fuel load (L)</label><input type="number" id="g-fuel" placeholder="65"></div>
+          <div class="form-group"><label>Tyre compound</label><select id="g-tyre"><option>Soft</option><option>Medium</option><option>Hard</option><option>Intermediate</option><option>Wet</option></select></div>
+          <div class="form-group full">
+            <label>Tire Percentage At End (%)</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;max-width:340px">
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Front Left</span>
+                <input type="number" id="g-tyre-fl" placeholder="0-100" min="0" max="100" oninput="calcGT3TyreAvg()" style="height:32px;font-size:13px">
+              </div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Front Right</span>
+                <input type="number" id="g-tyre-fr" placeholder="0-100" min="0" max="100" oninput="calcGT3TyreAvg()" style="height:32px;font-size:13px">
+              </div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Rear Left</span>
+                <input type="number" id="g-tyre-rl" placeholder="0-100" min="0" max="100" oninput="calcGT3TyreAvg()" style="height:32px;font-size:13px">
+              </div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Rear Right</span>
+                <input type="number" id="g-tyre-rr" placeholder="0-100" min="0" max="100" oninput="calcGT3TyreAvg()" style="height:32px;font-size:13px">
+              </div>
+            </div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+              <span style="font-size:12px;color:var(--muted)">Average:</span>
+              <span id="g-tyre-avg" style="font-family:var(--font);font-size:15px;color:var(--accent)">--</span>
+              <input type="hidden" id="g-tyre-cond" value="">
+            </div>
+          </div>
+          <div class="form-group"><label>Off tracks</label><input type="number" id="g-offtracks" placeholder="0" min="0"></div>
+          <div class="form-group"><label>Lockups</label><input type="number" id="g-lockups" placeholder="0" min="0"></div>
+          <div class="form-group"><label>Spins</label><input type="number" id="g-spins" placeholder="0" min="0"></div>
+          <div class="form-group"><label>Setup version</label><input type="text" id="g-setup" placeholder="e.g. Base, V2, Quali"></div>
+        </div>
+        <div class="form-section-title">Assessment</div>
+        <div class="form-grid">
+          <div class="form-group full"><label>Confidence in car (1–10)</label>
+            <div class="slider-row"><input type="range" min="1" max="10" value="7" id="g-confidence" oninput="document.getElementById('g-conf-val').textContent=this.value"><div class="slider-val" id="g-conf-val">7</div></div>
+          </div>
+          <div class="form-group full"><label>Comments</label><textarea id="g-comments" placeholder="Car balance, setup changes, issues, observations..."></textarea></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-gt3" onclick="submitGT3()">Submit session →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GT3 RANKINGS -->
+    <div class="page" id="gt3-page-rankings">
+      <div class="section-label">LMGT3 · Car rankings by track</div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--muted)">Track:</span>
+          <select id="g-rank-track" onchange="renderGT3Rankings()" style="width:220px">
+            <option value="all">All tracks (combined)</option>
+            <option>Circuit de la Sarthe</option><option>Spa-Francorchamps</option><option>Monza</option><option>Silverstone</option><option>Nürburgring</option><option>Fuji Speedway</option><option>Portimão</option><option>Bahrain</option><option>São Paulo</option><option>Austin (COTA)</option><option>Imola</option><option>Lusail</option>
+          </select>
+          <span style="font-size:12px;color:var(--muted);margin-left:auto">Weighted average across all drivers</span>
+        </div>
+      </div>
+      <div class="card"><div id="g-rankings-wrap"></div></div>
+    </div>
+
+    <!-- GT3 SESSIONS -->
+    <div class="page" id="gt3-page-sessions">
+      <div class="section-label">LMGT3 · All test sessions</div>
+      <div class="card"><div id="g-sessions-wrap"></div></div>
+    </div>
+
+    <!-- GT3 REFERENCE -->
+    <div class="page" id="gt3-page-reference">
+      <div class="section-label">LMGT3 · Car reference by track</div>
+      <div class="card" style="padding:0;overflow:hidden"><div id="g-reference-body"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- HYPERCAR CLASS -->
+<div class="class-view" id="view-hyp">
+  <div class="class-bar bar-hyp">
+    <span class="class-pill pill-hyp">HYPERCAR</span>
+    <span class="bar-desc">LMH & LMDh prototype class · Ferrari · Toyota · Porsche · Cadillac · Peugeot · BMW · Alpine · Lamborghini · Aston Martin</span>
+  </div>
+  <div class="nav" id="nav-hyp">
+    <button class="nav-btn active" onclick="showPage('hyp','dashboard',this)">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('hyp','submit',this)">Log Test</button>
+    <button class="nav-btn" onclick="showPage('hyp','rankings',this)">Rankings</button>
+    <button class="nav-btn" onclick="showPage('hyp','sessions',this)">Sessions</button>
+    <button class="nav-btn" onclick="showPage('hyp','reference',this)">Car Reference</button>
+  </div>
+  <div class="main">
+
+    <!-- HYP DASHBOARD -->
+    <div class="page active" id="hyp-page-dashboard">
+      <div class="section-label">Hypercar · Team overview</div>
+      <div class="grid-4" style="margin-bottom:20px">
+        <div class="stat"><div class="stat-label">Sessions logged</div><div class="stat-value hyp-color" id="h-stat-sessions">0</div></div>
+        <div class="stat"><div class="stat-label">Cars tested</div><div class="stat-value" id="h-stat-cars">0</div></div>
+        <div class="stat"><div class="stat-label">Tracks covered</div><div class="stat-value" id="h-stat-tracks">0</div></div>
+        <div class="stat"><div class="stat-label">Top car overall</div><div class="stat-value green" id="h-stat-top" style="font-size:14px">—</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="section-label">Rankings by track</div>
+          <div class="track-chips" id="h-dash-chips"></div>
+          <div id="h-dash-rankings"></div>
+        </div>
+        <div class="card">
+          <div class="section-label">Recent sessions</div>
+          <div id="h-dash-recent"></div>
+          <button class="btn-ghost" onclick="showPage('hyp','submit',document.querySelectorAll('#nav-hyp .nav-btn')[1])">+ Log new test session</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HYP SUBMIT -->
+    <div class="page" id="hyp-page-submit">
+      <div class="section-label">Hypercar · Log test session</div>
+      <div class="card hyp-focus">
+        <div class="form-section-title">Session details</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Driver</label><input type="text" id="h-driver" placeholder="Your name"></div>
+          <div class="form-group"><label>Driver level</label>
+            <select id="h-level"><option value="elite">Elite (×1.2)</option><option value="advanced">Advanced (×1.1)</option><option value="intermediate" selected>Intermediate (×1.0)</option><option value="developing">Developing (×0.9)</option><option value="novice">Novice (×0.8)</option></select>
+          </div>
+          <div class="form-group"><label>Track</label>
+            <select id="h-track">
+              <option value="">Select track...</option>
+              <option>Circuit de la Sarthe (Le Mans)</option><option>Imola</option><option>Spa-Francorchamps</option><option>Fuji Speedway</option><option>Bahrain International Circuit</option><option>Lusail (Qatar)</option><option>Interlagos (São Paulo)</option><option>COTA (Austin)</option><option>Sebring</option><option>Monza</option><option>Portimão</option><option>Silverstone</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Car</label>
+            <select id="h-car">
+              <option value="">Select car...</option>
+              <optgroup label="LMH"><option>Ferrari 499P</option><option>Toyota GR010 Hybrid</option><option>Peugeot 9X8 EVO (2024)</option><option>Peugeot 9X8 (2023 wingless)</option><option>Aston Martin Valkyrie AMR-LMH</option><option>Glickenhaus 007 LMH</option><option>Isotta Fraschini Tipo 6 LMH-C</option></optgroup>
+              <optgroup label="LMDh"><option>Porsche 963</option><option>Cadillac V-Series.R</option><option>BMW M Hybrid V8</option><option>Alpine A424</option><option>Lamborghini SC63</option><option>Genesis GMR-001</option></optgroup>
+            </select>
+          </div>
+          <div class="form-group"><label>Session type</label><select id="h-session"><option>Practice</option><option>Qualifying</option><option>Race Sim</option><option>Long Run</option><option>Setup Run</option></select></div>
+          <div class="form-group"><label>Weather</label><select id="h-weather"><option>Dry</option><option>Damp</option><option>Wet</option><option>Mixed</option></select></div>
+        </div>
+        <div class="form-section-title">Lap data</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Best lap (M:SS.mmm)</label><input type="text" id="h-best" placeholder="3:27.500"></div>
+          <div class="form-group"><label>Average lap (M:SS.mmm)</label><input type="text" id="h-avg" placeholder="3:29.100"></div>
+          <div class="form-group"><label>Benchmark / target (M:SS.mmm)</label><input type="text" id="h-bench" placeholder="3:26.000"></div>
+          <div class="form-group"><label>Laps completed</label><input type="number" id="h-laps" placeholder="24" min="1"></div>
+          <div class="form-group"><label>Tyre compound</label><select id="h-tyre"><option>Soft</option><option>Medium</option><option>Hard</option><option>Intermediate</option><option>Wet</option></select></div>
+          <div class="form-group full">
+            <label>Tire Percentage At End (%)</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;max-width:340px">
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Front Left</span>
+                <input type="number" id="h-tyre-fl" placeholder="0-100" min="0" max="100" oninput="calcHYPTyreAvg()" style="height:32px;font-size:13px">
+              </div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Front Right</span>
+                <input type="number" id="h-tyre-fr" placeholder="0-100" min="0" max="100" oninput="calcHYPTyreAvg()" style="height:32px;font-size:13px">
+              </div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Rear Left</span>
+                <input type="number" id="h-tyre-rl" placeholder="0-100" min="0" max="100" oninput="calcHYPTyreAvg()" style="height:32px;font-size:13px">
+              </div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:10px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase">Rear Right</span>
+                <input type="number" id="h-tyre-rr" placeholder="0-100" min="0" max="100" oninput="calcHYPTyreAvg()" style="height:32px;font-size:13px">
+              </div>
+            </div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:10px">
+              <span style="font-size:12px;color:var(--muted)">Average:</span>
+              <span id="h-tyre-avg" style="font-family:var(--font);font-size:15px;color:var(--hyp)">--</span>
+              <input type="hidden" id="h-tyre-cond" value="">
+            </div>
+          </div>
+          <div class="form-group"><label>Off tracks</label><input type="number" id="h-offtracks" placeholder="0" min="0"></div>
+          <div class="form-group"><label>Lockups</label><input type="number" id="h-lockups" placeholder="0" min="0"></div>
+          <div class="form-group"><label>Spins</label><input type="number" id="h-spins" placeholder="0" min="0"></div>
+          <div class="form-group"><label>Setup version</label><input type="text" id="h-setup" placeholder="e.g. Base, V2, Quali"></div>
+        </div>
+        <div class="form-section-title">Assessment</div>
+        <div class="form-grid">
+          <div class="form-group full"><label>Confidence in car (1–10)</label>
+            <div class="slider-row"><input type="range" min="1" max="10" value="7" id="h-confidence" oninput="document.getElementById('h-conf-val').textContent=this.value" style="accent-color:var(--hyp)"><div class="slider-val" style="color:var(--hyp)" id="h-conf-val">7</div></div>
+          </div>
+          <div class="form-group full"><label>Comments</label><textarea id="h-comments" placeholder="Hybrid management, car balance, setup changes, observations..."></textarea></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-hyp" onclick="submitHYP()">Submit session →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HYP RANKINGS -->
+    <div class="page" id="hyp-page-rankings">
+      <div class="section-label">Hypercar · Car rankings by track</div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--muted)">Track:</span>
+          <select id="h-rank-track" onchange="renderHYPRankings()" style="width:260px">
+            <option value="all">All tracks (combined)</option>
+            <option>Circuit de la Sarthe (Le Mans)</option><option>Imola</option><option>Spa-Francorchamps</option><option>Fuji Speedway</option><option>Bahrain International Circuit</option><option>Lusail (Qatar)</option><option>Interlagos (São Paulo)</option><option>COTA (Austin)</option><option>Sebring</option><option>Monza</option><option>Portimão</option><option>Silverstone</option>
+          </select>
+          <span style="font-size:12px;color:var(--muted);margin-left:auto">Weighted average across all drivers</span>
+        </div>
+      </div>
+      <div class="card"><div id="h-rankings-wrap"></div></div>
+    </div>
+
+    <!-- HYP SESSIONS -->
+    <div class="page" id="hyp-page-sessions">
+      <div class="section-label">Hypercar · All test sessions</div>
+      <div class="card"><div id="h-sessions-wrap"></div></div>
+    </div>
+
+    <!-- HYP REFERENCE -->
+    <div class="page" id="hyp-page-reference">
+      <div class="section-label">Hypercar · Car reference by track — LMU in-game data</div>
+      <div class="card" style="padding:0;overflow:hidden"><div id="h-reference-body"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════
+const WEIGHTS = {elite:1.2,advanced:1.1,intermediate:1.0,developing:0.9,novice:0.8};
+
+const GT3_COLORS = {
+  'Aston Martin Vantage AMR GT3 Evo':'#006633','BMW M4 GT3':'#0066cc',
+  'Ferrari 296 GT3':'#cc0000','Ford Mustang GT3':'#003399',
+  'Lamborghini Huracán GT3 Evo2':'#ffcc00','McLaren 720S GT3 Evo':'#ff8000',
+  'Mercedes-AMG GT3 Evo':'#00d2be','Porsche 911 GT3 R (992)':'#aa0000',
+  'Chevrolet Corvette Z06 GT3.R':'#ffdd00'
+};
+const HYP_COLORS = {
+  'Ferrari 499P':'#dc2626','Toyota GR010 Hybrid':'#e11d48',
+  'Peugeot 9X8 EVO (2024)':'#7c3aed','Peugeot 9X8 (2023 wingless)':'#6d28d9',
+  'Aston Martin Valkyrie AMR-LMH':'#065f46','Glickenhaus 007 LMH':'#92400e',
+  'Isotta Fraschini Tipo 6 LMH-C':'#d97706','Porsche 963':'#b45309',
+  'Cadillac V-Series.R':'#1d4ed8','BMW M Hybrid V8':'#1e40af',
+  'Alpine A424':'#4f46e5','Lamborghini SC63':'#16a34a','Genesis GMR-001':'#0f172a'
+};
+
+// GT3 reference — LMU bop-tourism.com + OverTake guide
+const GT3_REF = [
+  { name:'Circuit de la Sarthe', flag:'🇫🇷', type:'Low-drag / High-speed', picks:[
+    {car:'Ford Mustang GT3',color:'#003399',lap:'3:54.x',note:'Top straight-line speed suits Hunaudières; aggressive under braking. Leads split-1 GT3 wins in LMU at 57.3% — dominant pick at Le Mans.'},
+    {car:'Lamborghini Huracán GT3 Evo2',color:'#ffcc00',lap:'3:54.649',note:'Fastest LMGT3 at Le Mans in LMU setup-shop benchmarks (Hymo, V1.3.3.4). V10 suits long straights.'},
+    {car:'Porsche 911 GT3 R (992)',color:'#aa0000',lap:'3:55.x',note:'Excellent fuel efficiency and reliability; very popular pick in top-split LMU races. Consistent over 24hr format.'},
+  ]},
+  { name:'Spa-Francorchamps', flag:'🇧🇪', type:'High-speed / Variable weather', picks:[
+    {car:'McLaren 720S GT3 Evo',color:'#ff8000',lap:'2:19.x',note:'High-downforce aero and strong mid-corner speed through Eau Rouge and Pouhon. Popular in wet conditions in LMU.'},
+    {car:'Porsche 911 GT3 R (992)',color:'#aa0000',lap:'2:19.x',note:'Leads GT3 split-1 wins overall in LMU; excellent on Kemmel Straight. Predictable in variable Spa weather.'},
+    {car:'BMW M4 GT3',color:'#0066cc',lap:'2:19.x',note:'Most popular choice in open-setup GT3 races at 22.4%; strong braking into Blanchimont and La Source.'},
+  ]},
+  { name:'Imola', flag:'🇮🇹', type:'Technical / Bumpy', picks:[
+    {car:'BMW M4 GT3',color:'#0066cc',lap:'1:51.x',note:'WRT took a 1-2 at Imola in real life and in LMU the BMW is composed over the bumpy surface. Good traction at Rivazza.'},
+    {car:'Ferrari 296 GT3',color:'#cc0000',lap:'1:51.x',note:'Home circuit advantage; excellent mechanical grip in the slow Variante Alta and tight Tamburello section.'},
+    {car:'Porsche 911 GT3 R (992)',color:'#aa0000',lap:'1:51.x',note:'Consistent pick in LMU; rear-biased setup works well in Imola\'s flowing third sector.'},
+  ]},
+  { name:'Fuji Speedway', flag:'🇯🇵', type:'Long straight / Technical infield', picks:[
+    {car:'McLaren 720S GT3 Evo',color:'#ff8000',lap:'1:38.x',note:'Strong low-drag setup potential for the long main straight; nimble through the technical infield.'},
+    {car:'Ford Mustang GT3',color:'#003399',lap:'1:38.x',note:'High straight-line speed is rewarded at Fuji. Good traction out of the hairpin.'},
+    {car:'Porsche 911 GT3 R (992)',color:'#aa0000',lap:'1:38.x',note:'Consistent all-round LMGT3 pick; reliable tyre management over long Fuji stints.'},
+  ]},
+  { name:'Bahrain', flag:'🇧🇭', type:'High grip / Abrasive / Night', picks:[
+    {car:'Porsche 911 GT3 R (992)',color:'#aa0000',lap:'1:58.x',note:'Top split-1 win rate in LMU overall; excels on high-grip abrasive surfaces. Good tyre management in heat.'},
+    {car:'Aston Martin Vantage AMR GT3 Evo',color:'#006633',lap:'1:58.x',note:'Stable and confidence-inspiring; Aston\'s smooth aero platform suits night-race consistency at Bahrain.'},
+    {car:'Mercedes-AMG GT3 Evo',color:'#00d2be',lap:'1:58.x',note:'New to LMU but the AMG GT3\'s strong traction out of Bahrain\'s slow corners is a key advantage.'},
+  ]},
+  { name:'São Paulo', flag:'🇧🇷', type:'Bumpy / High-altitude', picks:[
+    {car:'McLaren 720S GT3 Evo',color:'#ff8000',lap:'1:37.x',note:'Agile and good on bumpy surfaces; strong through the Senna S and Tribunal section at altitude.'},
+    {car:'Ferrari 296 GT3',color:'#cc0000',lap:'1:37.x',note:'Good mechanical grip at altitude; composed over Interlagos\'s cambered and uneven tarmac.'},
+    {car:'Porsche 911 GT3 R (992)',color:'#aa0000',lap:'1:37.x',note:'Consistent Porsche remains a safe and fast choice at this circuit. Good braking stability.'},
+  ]},
+  { name:'Austin (COTA)', flag:'🇺🇸', type:'Technical / High tyre deg', picks:[
+    {car:'Ford Mustang GT3',color:'#003399',lap:'2:05.x',note:'Leads split-1 GT3 wins in LMU at 57.3%. American muscle suits COTA\'s aggressive tarmac and heavy braking zones.'},
+    {car:'Porsche 911 GT3 R (992)',color:'#aa0000',lap:'2:05.x',note:'Strong braking into T1 and T12; consistent tyre management over COTA\'s high-degradation surface.'},
+    {car:'McLaren 720S GT3 Evo',color:'#ff8000',lap:'2:05.x',note:'High-downforce setup works well through COTA\'s fast sweepers S2; agile through the technical infield.'},
+  ]},
+  { name:'Lusail', flag:'🇶🇦', type:'Night / High-speed', picks:[
+    {car:'McLaren 720S GT3 Evo',color:'#ff8000',lap:'2:01.x',note:'Low-drag setup works well on Qatar\'s long straight. Good in corners T6–T12 where aero balance matters.'},
+    {car:'Porsche 911 GT3 R (992)',color:'#aa0000',lap:'2:01.x',note:'Fuel-efficient and consistent; Porsche\'s pace under lights at Qatar is reliable in LMU.'},
+    {car:'Ferrari 296 GT3',color:'#cc0000',lap:'2:01.x',note:'Strong traction out of Qatar\'s tight hairpin section. Good mid-corner speed through the fast second sector.'},
+  ]},
+];
+
+// Hypercar reference — bop-tourism.com LMU data (GoSetups/BeAlien/Hymo)
+const HYP_REF = [
+  { name:'Circuit de la Sarthe (Le Mans)', flag:'🇫🇷', type:'Low-drag / High-speed / 24hr', picks:[
+    {car:'Cadillac V-Series.R',color:'#1d4ed8',lap:'~3:23.x',note:'Naturally aspirated V8 excels on long straights; rewards smooth drivers and is particularly strong under braking.'},
+    {car:'Toyota GR010 Hybrid',color:'#e11d48',lap:'~3:23.x',note:'Aggressive hybrid deployment helps on Hunaudières. Top-5 in overall LMU car ranking; good rotation in slower sectors.'},
+    {car:'Porsche 963',color:'#b45309',lap:'~3:23.x',note:'Good straight-line speed and fuel economy — able to extract an extra lap per stint. Suits the 24hr endurance format.'},
+  ], note:'Note: All Hypercars at Le Mans run within ~0.4s due to BoP. Endurance strategy (fuel, tyre wear) matters as much as raw pace.'},
+  { name:'Imola', flag:'🇮🇹', type:'Technical / Mixed-speed', picks:[
+    {car:'Lamborghini SC63',color:'#16a34a',lap:'~1:38.x',note:'#1 in LMU overall Hypercar car strength ranking. Agile through Imola\'s tight corners; strong mid-range torque from V8.'},
+    {car:'BMW M Hybrid V8',color:'#1e40af',lap:'~1:38.x',note:'Planted and composed chassis suits Imola\'s bumpy surface. Stable braking at Tamburello and Variante Alta.'},
+    {car:'Cadillac V-Series.R',color:'#1d4ed8',lap:'~1:38.x',note:'Smooth platform rewards consistent driving. Strong braking into slow corners in the first sector.'},
+  ]},
+  { name:'Spa-Francorchamps', flag:'🇧🇪', type:'High-speed / Variable weather', picks:[
+    {car:'Peugeot 9X8 (2023 wingless)',color:'#6d28d9',lap:'~1:57.x',note:'Found to be the fastest Hypercar at Spa in LMU testing (OverTake). Low-drag aero is perfect for Kemmel Straight and Raidillon.'},
+    {car:'Lamborghini SC63',color:'#16a34a',lap:'~1:57.x',note:'#1 overall in LMU Hypercar ranking; agile through Eau Rouge / Raidillon complex and fast through Pouhon.'},
+    {car:'Cadillac V-Series.R',color:'#1d4ed8',lap:'~1:57.x',note:'Top-3 in LMU overall ranking; good straight-line speed suits the Kemmel section. Predictable in variable weather.'},
+  ]},
+  { name:'Fuji Speedway', flag:'🇯🇵', type:'Long straight / Technical infield', picks:[
+    {car:'Peugeot 9X8 EVO (2024)',color:'#7c3aed',lap:'1:24.144',note:'Fastest Hypercar at Fuji in LMU (bop-tourism.com, V1.3.3.3). Winged 2024 spec excels on the long main straight while staying balanced in the technical infield.'},
+    {car:'Alpine A424',color:'#4f46e5',lap:'1:24.249 (+0.105)',note:'2nd fastest at Fuji in LMU setup-shop benchmarks. Consistently strong at this track.'},
+    {car:'Isotta Fraschini Tipo 6 LMH-C',color:'#d97706',lap:'1:24.271 (+0.127)',note:'3rd fastest at Fuji in LMU data. Fast, though loose rear end at high speed — manageable with correct setup.'},
+  ]},
+  { name:'Bahrain International Circuit', flag:'🇧🇭', type:'High grip / Abrasive / Night', picks:[
+    {car:'Lamborghini SC63',color:'#16a34a',lap:'1:45.119',note:'Fastest Hypercar at Bahrain in LMU (bop-tourism.com, V1.3.2). #1 in overall LMU Hypercar car strength ranking.'},
+    {car:'Genesis GMR-001',color:'#64748b',lap:'~1:45.2',note:'#2 in LMU overall Hypercar ranking. New car showing strong pace; shares LMDh architecture with Porsche and Cadillac.'},
+    {car:'Cadillac V-Series.R',color:'#1d4ed8',lap:'~1:45.3',note:'#3 in LMU overall ranking. Naturally aspirated V8 handles high-grip Bahrain surface well; smooth under braking.'},
+  ]},
+  { name:'Lusail (Qatar)', flag:'🇶🇦', type:'Night / High-speed / Long straight', picks:[
+    {car:'Peugeot 9X8 EVO (2024)',color:'#7c3aed',lap:'~2:12.x',note:'Leads Hypercar open-setup online wins at 30.2% in LMU. Long Qatar straight suits its aero; 200kW hybrid strong out of slow corners.'},
+    {car:'Lamborghini SC63',color:'#16a34a',lap:'~2:12.x',note:'Top car in LMU overall ranking; performs well on medium-high speed tracks like Qatar.'},
+    {car:'Toyota GR010 Hybrid',color:'#e11d48',lap:'~2:12.x',note:'Aggressive hybrid deployment off slow corners is a big advantage in Qatar\'s twisty second sector.'},
+  ]},
+  { name:'Interlagos (São Paulo)', flag:'🇧🇷', type:'Bumpy / High-altitude / Short', picks:[
+    {car:'Cadillac V-Series.R',color:'#1d4ed8',lap:'~1:27.x',note:'Naturally aspirated V8 thrives at altitude in LMU. Top-3 in overall car strength; strong braking into the Senna S.'},
+    {car:'Lamborghini SC63',color:'#16a34a',lap:'~1:27.x',note:'#1 in LMU Hypercar ranking. Agile chassis handles Interlagos bumps and cambered corners well.'},
+    {car:'BMW M Hybrid V8',color:'#1e40af',lap:'~1:27.x',note:'Planted and consistent — keeps it clean on a surface that punishes mistakes. Good at altitude.'},
+  ]},
+  { name:'COTA (Austin)', flag:'🇺🇸', type:'Technical / High tyre degradation', picks:[
+    {car:'Lamborghini SC63',color:'#16a34a',lap:'~1:56.x',note:'#1 in LMU Hypercar ranking overall; performs well at COTA\'s mix of slow chicanes and high-speed sweepers.'},
+    {car:'Cadillac V-Series.R',color:'#1d4ed8',lap:'~1:56.x',note:'Smooth braking is a major asset into COTA\'s heavy braking zones (T1, T12). Top-3 in LMU ranking.'},
+    {car:'Toyota GR010 Hybrid',color:'#e11d48',lap:'~1:56.x',note:'Hybrid rotation helps in slow corners like T12. Greater mechanical grip in mid-speed sections.'},
+  ]},
+];
+
+// ══════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════
+let gt3Sessions = JSON.parse(localStorage.getItem('ccr_gt3_sessions')||'[]');
+let hypSessions = JSON.parse(localStorage.getItem('ccr_hyp_sessions')||'[]');
+let activeClass = 'gt3';
+
+// ══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════════════════
+function switchClass(cls) {
+  activeClass = cls;
+  document.getElementById('view-gt3').classList.toggle('active', cls==='gt3');
+  document.getElementById('view-hyp').classList.toggle('active', cls==='hyp');
+  document.getElementById('btn-gt3').className = 'class-btn' + (cls==='gt3'?' active-gt3':'');
+  document.getElementById('btn-hyp').className = 'class-btn' + (cls==='hyp'?' active-hyp':'');
+  if(cls==='gt3') renderGT3Dashboard();
+  else renderHYPDashboard();
+}
+
+function showPage(cls, id, btn) {
+  const prefix = cls==='gt3'?'gt3':'hyp';
+  document.querySelectorAll(`#view-${cls==='gt3'?'gt3':'hyp'} .page`).forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll(`#nav-${cls==='gt3'?'gt3':'hyp'} .nav-btn`).forEach(b=>b.classList.remove('active'));
+  document.getElementById(`${prefix}-page-${id}`).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(id==='dashboard') cls==='gt3'?renderGT3Dashboard():renderHYPDashboard();
+  if(id==='rankings')  cls==='gt3'?renderGT3Rankings():renderHYPRankings();
+  if(id==='sessions')  cls==='gt3'?renderGT3Sessions():renderHYPSessions();
+  if(id==='reference') cls==='gt3'?renderGT3Reference():renderHYPReference();
+}
+
+// ══════════════════════════════════════════════════════════
+//  SHARED HELPERS
+// ══════════════════════════════════════════════════════════
+function parseLap(str) {
+  if(!str) return null;
+  str=str.trim();
+  if(str.includes(':')) { const [m,s]=str.split(':'); return parseFloat(m)*60+parseFloat(s); }
+  return parseFloat(str)||null;
+}
+function fmtLap(s) {
+  if(!s||s<=0) return '—';
+  const m=Math.floor(s/60), rem=(s%60).toFixed(3).padStart(6,'0');
+  return `${m}:${rem}`;
+}
+function showToast(msg,err) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=err?'var(--danger)':'var(--accent2)';
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000);
+}
+function getRankings(sessions, track) {
+  const filtered=(track&&track!=='all')?sessions.filter(s=>s.track===track):sessions;
+  const bycar={};
+  filtered.forEach(s=>{ if(!bycar[s.car]) bycar[s.car]={scores:[],sessions:0}; bycar[s.car].scores.push(s.score); bycar[s.car].sessions++; });
+  return Object.entries(bycar).map(([car,d])=>({car,sessions:d.sessions,score:Math.round((d.scores.reduce((a,b)=>a+b,0)/d.scores.length)*10)/10})).sort((a,b)=>b.score-a.score);
+}
+
+// ══════════════════════════════════════════════════════════
+//  GT3 SCORING
+// ══════════════════════════════════════════════════════════
+function calcGT3Score(s) {
+  const best=parseLap(s.best), avg=parseLap(s.avg);
+  const laps=parseInt(s.laps)||1, conf=parseInt(s.confidence)||5;
+  const mistakes=(parseInt(s.offtracks)||0)+(parseInt(s.lockups)||0)+(parseInt(s.spins)||0);
+  const consistency=(best&&avg&&best>0)?Math.max(0,100-((avg-best)/best)*500):70;
+  const racePace=best?Math.max(0,100-(best-100)*2):50;
+  const mistakeScore=Math.max(0,100-(mistakes/Math.max(laps,1))*200);
+  const confScore=conf*10;
+  const tyreScore=s.tyreCond!==''&&s.tyreCond!=null?Math.min(100,Math.max(0,parseFloat(s.tyreCond))):70;
+  const raw=racePace*0.35+consistency*0.25+tyreScore*0.15+confScore*0.15+mistakeScore*0.10;
+  return Math.min(100,Math.round(raw*(WEIGHTS[s.level]||1.0)*10)/10);
+}
+
+function submitGT3() {
+  const driver=document.getElementById('g-driver').value.trim();
+  const track=document.getElementById('g-track').value;
+  const car=document.getElementById('g-car').value;
+  const best=document.getElementById('g-best').value;
+  if(!driver||!track||!car||!best){showToast('Fill in driver, track, car, and best lap',true);return;}
+  const s={id:Date.now(),date:new Date().toISOString(),driver,level:document.getElementById('g-level').value,track,car,sessionType:document.getElementById('g-session').value,weather:document.getElementById('g-weather').value,best,avg:document.getElementById('g-avg').value,laps:document.getElementById('g-laps').value,fuel:document.getElementById('g-fuel').value,tyre:document.getElementById('g-tyre').value,tyreCond:document.getElementById('g-tyre-cond').value,tyreFl:document.getElementById('g-tyre-fl').value,tyreFr:document.getElementById('g-tyre-fr').value,tyreRl:document.getElementById('g-tyre-rl').value,tyreRr:document.getElementById('g-tyre-rr').value,offtracks:document.getElementById('g-offtracks').value,lockups:document.getElementById('g-lockups').value,spins:document.getElementById('g-spins').value,confidence:document.getElementById('g-confidence').value,setup:document.getElementById('g-setup').value,comments:document.getElementById('g-comments').value};
+  s.score=calcGT3Score(s);
+  gt3Sessions.unshift(s);
+  localStorage.setItem('ccr_gt3_sessions',JSON.stringify(gt3Sessions));
+  showToast('LMGT3 session logged — score: '+s.score);
+  showPage('gt3','dashboard',document.querySelector('#nav-gt3 .nav-btn'));
+}
+
+// ══════════════════════════════════════════════════════════
+//  HYPERCAR SCORING  (% of benchmark)
+// ══════════════════════════════════════════════════════════
+function calcHYPScore(s) {
+  const best=parseLap(s.best), bench=parseLap(s.bench), avg=parseLap(s.avg);
+  const laps=parseInt(s.laps)||1, conf=parseInt(s.confidence)||5;
+  const mistakes=(parseInt(s.offtracks)||0)+(parseInt(s.lockups)||0)+(parseInt(s.spins)||0);
+  // Pace score: % of benchmark (core metric)
+  const paceScore=(best&&bench&&bench>0)?Math.min(100,(bench/best)*100):50;
+  // Avg pace score
+  const avgPaceScore=(avg&&bench&&bench>0)?Math.min(100,(bench/avg)*100):paceScore;
+  // Consistency: gap between best and avg as % of best
+  const consistency=(best&&avg&&best>0)?Math.max(0,100-((avg-best)/best)*500):70;
+  const mistakeScore=Math.max(0,100-(mistakes/Math.max(laps,1))*200);
+  const confScore=conf*10;
+  const tyreScore=s.tyreCond!==''&&s.tyreCond!=null?Math.min(100,Math.max(0,parseFloat(s.tyreCond))):70;
+  // Weight: pace vs benchmark is the primary metric for Hypercar
+  const raw=paceScore*0.40+avgPaceScore*0.20+consistency*0.15+tyreScore*0.10+confScore*0.10+mistakeScore*0.05;
+  return Math.min(100,Math.round(raw*(WEIGHTS[s.level]||1.0)*10)/10);
+}
+
+function submitHYP() {
+  const driver=document.getElementById('h-driver').value.trim();
+  const track=document.getElementById('h-track').value;
+  const car=document.getElementById('h-car').value;
+  const best=document.getElementById('h-best').value;
+  const bench=document.getElementById('h-bench').value;
+  if(!driver||!track||!car||!best||!bench){showToast('Fill in driver, track, car, best lap, and benchmark',true);return;}
+  const s={id:Date.now(),date:new Date().toISOString(),driver,level:document.getElementById('h-level').value,track,car,sessionType:document.getElementById('h-session').value,weather:document.getElementById('h-weather').value,best,avg:document.getElementById('h-avg').value,bench,laps:document.getElementById('h-laps').value,tyre:document.getElementById('h-tyre').value,tyreCond:document.getElementById('h-tyre-cond').value,tyreFl:document.getElementById('h-tyre-fl').value,tyreFr:document.getElementById('h-tyre-fr').value,tyreRl:document.getElementById('h-tyre-rl').value,tyreRr:document.getElementById('h-tyre-rr').value,offtracks:document.getElementById('h-offtracks').value,lockups:document.getElementById('h-lockups').value,spins:document.getElementById('h-spins').value,confidence:document.getElementById('h-confidence').value,setup:document.getElementById('h-setup').value,comments:document.getElementById('h-comments').value};
+  s.score=calcHYPScore(s);
+  hypSessions.unshift(s);
+  localStorage.setItem('ccr_hyp_sessions',JSON.stringify(hypSessions));
+  showToast('Hypercar session logged — score: '+s.score);
+  showPage('hyp','dashboard',document.querySelector('#nav-hyp .nav-btn'));
+}
+
+// ══════════════════════════════════════════════════════════
+//  GT3 RENDERS
+// ══════════════════════════════════════════════════════════
+function renderGT3Dashboard() {
+  document.getElementById('g-stat-sessions').textContent=gt3Sessions.length;
+  document.getElementById('g-stat-cars').textContent=[...new Set(gt3Sessions.map(s=>s.car))].length;
+  document.getElementById('g-stat-tracks').textContent=[...new Set(gt3Sessions.map(s=>s.track))].length;
+  const top=getRankings(gt3Sessions,'all')[0];
+  document.getElementById('g-stat-top').textContent=top?top.car.split(' ').slice(0,2).join(' '):'—';
+  const tracks=[...new Set(gt3Sessions.map(s=>s.track))];
+  const active=tracks[0]||null;
+  document.getElementById('g-dash-chips').innerHTML=tracks.map(t=>`<div class="chip${t===active?' active-gt3':''}" onclick="g_selectChip('${t}',this)">${t}</div>`).join('');
+  renderGT3DashRankings(active);
+  const rec=document.getElementById('g-dash-recent');
+  rec.innerHTML=!gt3Sessions.length?'<div class="empty">No sessions yet.</div>':gt3Sessions.slice(0,5).map(s=>`
+    <div class="session-item">
+      <div><div style="font-size:14px">${s.car.split(' ').slice(0,3).join(' ')}</div><div class="session-meta">${s.driver} · ${s.track} · ${fmtLap(parseLap(s.best))}</div></div>
+      <div style="text-align:right"><div style="font-family:var(--font);font-size:16px;color:var(--accent)">${s.score}</div><div class="session-meta">score</div></div>
+    </div>`).join('');
+}
+function g_selectChip(t,el){document.querySelectorAll('#g-dash-chips .chip').forEach(c=>c.className='chip');el.classList.add('active-gt3');renderGT3DashRankings(t);}
+function renderGT3DashRankings(track){
+  const r=getRankings(gt3Sessions,track),el=document.getElementById('g-dash-rankings');
+  if(!r.length){el.innerHTML='<div class="empty">No data for this track yet.</div>';return;}
+  const max=r[0].score;
+  el.innerHTML=r.slice(0,6).map((x,i)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <div style="width:18px;font-family:var(--font);font-size:11px;color:${i===0?'var(--accent)':'var(--muted)'}">${i+1}</div>
+    <div style="flex:1"><div style="font-size:13px;margin-bottom:4px"><span class="car-dot" style="background:${GT3_COLORS[x.car]||'#666'};margin-right:6px"></span>${x.car.split(' ').slice(0,3).join(' ')}</div>
+    <div class="score-bar"><div class="score-bar-fill fill-gt3" style="width:${(x.score/max)*100}%"></div></div></div>
+    <div style="font-family:var(--font);font-size:13px;color:var(--accent);min-width:36px;text-align:right">${x.score}</div>
+  </div>`).join('');
+}
+function renderGT3Rankings(){
+  const track=document.getElementById('g-rank-track').value;
+  const r=getRankings(gt3Sessions,track),el=document.getElementById('g-rankings-wrap');
+  if(!r.length){el.innerHTML='<div class="empty">No data yet. Log some test sessions first.</div>';return;}
+  const max=r[0].score;
+  el.innerHTML=`<table class="rank-table"><thead><tr><th>#</th><th>Car</th><th>Score</th><th style="min-width:160px">Performance</th><th>Sessions</th></tr></thead><tbody>${
+    r.map((x,i)=>`<tr><td><span class="rank-num" style="color:${i===0?'var(--accent)':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--muted)'}">${i+1}</span></td>
+    <td><span class="car-dot" style="background:${GT3_COLORS[x.car]||'#666'};margin-right:8px"></span>${x.car}</td>
+    <td><span style="font-family:var(--font);color:var(--accent)">${x.score}</span></td>
+    <td><div class="score-bar"><div class="score-bar-fill fill-gt3" style="width:${(x.score/max)*100}%"></div></div></td>
+    <td><span style="color:var(--muted);font-size:13px">${x.sessions}</span></td></tr>`).join('')
+  }</tbody></table>`;
+}
+function renderGT3Sessions(){
+  const el=document.getElementById('g-sessions-wrap');
+  if(!gt3Sessions.length){el.innerHTML='<div class="empty">No sessions logged yet.</div>';return;}
+  el.innerHTML=`<table class="rank-table"><thead><tr><th>Date</th><th>Driver</th><th>Track</th><th>Car</th><th>Best Lap</th><th>Avg Lap</th><th>Score</th><th>Weather</th></tr></thead><tbody>${
+    gt3Sessions.map(s=>`<tr>
+      <td style="color:var(--muted);font-size:12px">${new Date(s.date).toLocaleDateString()}</td>
+      <td>${s.driver}</td><td style="font-size:13px">${s.track}</td>
+      <td><span class="car-dot" style="background:${GT3_COLORS[s.car]||'#666'};margin-right:6px"></span><span style="font-size:13px">${s.car.split(' ').slice(0,3).join(' ')}</span></td>
+      <td><span style="font-family:var(--font);font-size:13px">${fmtLap(parseLap(s.best))}</span></td>
+      <td><span style="font-family:var(--font);font-size:13px;color:var(--muted)">${s.avg?fmtLap(parseLap(s.avg)):'—'}</span></td>
+      <td><span style="font-family:var(--font);color:var(--accent)">${s.score}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${s.weather}</td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+function renderGT3Reference(){
+  document.getElementById('g-reference-body').innerHTML=GT3_REF.map((t,i)=>`
+    ${i>0?'<div class="ref-divider"></div>':''}
+    <div class="track-ref-header"><span style="font-size:20px">${t.flag}</span>
+      <div><div class="track-ref-name">${t.name}</div><div class="track-ref-meta">${t.type}</div></div>
+    </div>
+    <table class="rank-table"><tbody>${t.picks.map((p,pi)=>`<tr>
+      <td style="width:40px;text-align:center"><span style="font-family:var(--font);font-size:12px;color:${pi===0?'var(--accent)':pi===1?'#c0c0c0':'#cd7f32'}">${pi+1}</span></td>
+      <td style="width:220px"><span class="car-dot" style="background:${p.color};margin-right:8px"></span><span style="font-weight:500">${p.car}</span></td>
+      <td style="width:100px">${p.lap?`<span class="lap-chip">${p.lap}</span>`:''}</td>
+      <td style="font-size:12px;color:var(--muted)">${p.note}</td>
+    </tr>`).join('')}</tbody></table>
+    ${t.note?`<div class="ref-note">⚠ ${t.note}</div>`:''}`
+  ).join('')+'<div class="ref-source-bar">Data: LMU bop-tourism.com (GoSetups/BeAlien/Hymo setup-shop benchmarks) · OverTake.gg LMU Hypercar guide · Patch V1.3.3.x · Rankings shift with each BoP update.</div>';
+}
+
+// ══════════════════════════════════════════════════════════
+//  HYPERCAR RENDERS
+// ══════════════════════════════════════════════════════════
+function renderHYPDashboard() {
+  document.getElementById('h-stat-sessions').textContent=hypSessions.length;
+  document.getElementById('h-stat-cars').textContent=[...new Set(hypSessions.map(s=>s.car))].length;
+  document.getElementById('h-stat-tracks').textContent=[...new Set(hypSessions.map(s=>s.track))].length;
+  const top=getRankings(hypSessions,'all')[0];
+  document.getElementById('h-stat-top').textContent=top?top.car.split(' ').slice(0,2).join(' '):'—';
+  const tracks=[...new Set(hypSessions.map(s=>s.track))];
+  const active=tracks[0]||null;
+  document.getElementById('h-dash-chips').innerHTML=tracks.map(t=>`<div class="chip${t===active?' active-hyp':''}" onclick="h_selectChip('${t}',this)">${t}</div>`).join('');
+  renderHYPDashRankings(active);
+  const rec=document.getElementById('h-dash-recent');
+  rec.innerHTML=!hypSessions.length?'<div class="empty">No sessions yet.</div>':hypSessions.slice(0,5).map(s=>`
+    <div class="session-item">
+      <div><div style="font-size:14px">${s.car.split(' ').slice(0,3).join(' ')}</div><div class="session-meta">${s.driver} · ${s.track} · ${fmtLap(parseLap(s.best))}</div></div>
+      <div style="text-align:right"><div style="font-family:var(--font);font-size:16px;color:var(--hyp)">${s.score}</div><div class="session-meta">score</div></div>
+    </div>`).join('');
+}
+function h_selectChip(t,el){document.querySelectorAll('#h-dash-chips .chip').forEach(c=>c.className='chip');el.classList.add('active-hyp');renderHYPDashRankings(t);}
+function renderHYPDashRankings(track){
+  const r=getRankings(hypSessions,track),el=document.getElementById('h-dash-rankings');
+  if(!r.length){el.innerHTML='<div class="empty">No data for this track yet.</div>';return;}
+  const max=r[0].score;
+  el.innerHTML=r.slice(0,6).map((x,i)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <div style="width:18px;font-family:var(--font);font-size:11px;color:${i===0?'var(--hyp)':'var(--muted)'}">${i+1}</div>
+    <div style="flex:1"><div style="font-size:13px;margin-bottom:4px"><span class="car-dot" style="background:${HYP_COLORS[x.car]||'#666'};margin-right:6px"></span>${x.car.split(' ').slice(0,3).join(' ')}</div>
+    <div class="score-bar"><div class="score-bar-fill fill-hyp" style="width:${(x.score/max)*100}%"></div></div></div>
+    <div style="font-family:var(--font);font-size:13px;color:var(--hyp);min-width:36px;text-align:right">${x.score}</div>
+  </div>`).join('');
+}
+function renderHYPRankings(){
+  const track=document.getElementById('h-rank-track').value;
+  const r=getRankings(hypSessions,track),el=document.getElementById('h-rankings-wrap');
+  if(!r.length){el.innerHTML='<div class="empty">No data yet. Log some test sessions first.</div>';return;}
+  const max=r[0].score;
+  el.innerHTML=`<table class="rank-table"><thead><tr><th>#</th><th>Car</th><th>Score</th><th style="min-width:160px">Performance</th><th>Sessions</th></tr></thead><tbody>${
+    r.map((x,i)=>`<tr><td><span class="rank-num" style="color:${i===0?'var(--hyp)':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--muted)'}">${i+1}</span></td>
+    <td><span class="car-dot" style="background:${HYP_COLORS[x.car]||'#666'};margin-right:8px"></span>${x.car}</td>
+    <td><span style="font-family:var(--font);color:var(--hyp)">${x.score}</span></td>
+    <td><div class="score-bar"><div class="score-bar-fill fill-hyp" style="width:${(x.score/max)*100}%"></div></div></td>
+    <td><span style="color:var(--muted);font-size:13px">${x.sessions}</span></td></tr>`).join('')
+  }</tbody></table>`;
+}
+function renderHYPSessions(){
+  const el=document.getElementById('h-sessions-wrap');
+  if(!hypSessions.length){el.innerHTML='<div class="empty">No sessions logged yet.</div>';return;}
+  el.innerHTML=`<table class="rank-table"><thead><tr><th>Date</th><th>Driver</th><th>Track</th><th>Car</th><th>Best Lap</th><th>Avg Lap</th><th>Benchmark</th><th>Score</th></tr></thead><tbody>${
+    hypSessions.map(s=>`<tr>
+      <td style="color:var(--muted);font-size:12px">${new Date(s.date).toLocaleDateString()}</td>
+      <td>${s.driver}</td><td style="font-size:13px">${s.track}</td>
+      <td><span class="car-dot" style="background:${HYP_COLORS[s.car]||'#666'};margin-right:6px"></span><span style="font-size:13px">${s.car.split(' ').slice(0,3).join(' ')}</span></td>
+      <td><span style="font-family:var(--font);font-size:13px">${fmtLap(parseLap(s.best))}</span></td>
+      <td><span style="font-family:var(--font);font-size:13px;color:var(--muted)">${s.avg?fmtLap(parseLap(s.avg)):'—'}</span></td>
+      <td><span style="font-family:var(--font);font-size:13px;color:var(--muted)">${s.bench?fmtLap(parseLap(s.bench)):'—'}</span></td>
+      <td><span style="font-family:var(--font);color:var(--hyp)">${s.score}</span></td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+function renderHYPReference(){
+  document.getElementById('h-reference-body').innerHTML=HYP_REF.map((t,i)=>`
+    ${i>0?'<div class="ref-divider"></div>':''}
+    <div class="track-ref-header"><span style="font-size:20px">${t.flag}</span>
+      <div><div class="track-ref-name">${t.name}</div><div class="track-ref-meta">${t.type}</div></div>
+    </div>
+    <table class="rank-table"><tbody>${t.picks.map((p,pi)=>`<tr>
+      <td style="width:40px;text-align:center"><span style="font-family:var(--font);font-size:12px;color:${pi===0?'var(--hyp)':pi===1?'#c0c0c0':'#cd7f32'}">${pi+1}</span></td>
+      <td style="width:220px"><span class="car-dot" style="background:${p.color};margin-right:8px"></span><span style="font-weight:500">${p.car}</span></td>
+      <td style="width:120px">${p.lap?`<span class="lap-chip">${p.lap}</span>`:''}</td>
+      <td style="font-size:12px;color:var(--muted)">${p.note}</td>
+    </tr>`).join('')}</tbody></table>
+    ${t.note?`<div class="ref-note">⚠ ${t.note}</div>`:''}`
+  ).join('')+'<div class="ref-source-bar">Source: <a href="https://bop-tourism.com/car-strength/hypercar" target="_blank" style="color:var(--hyp)">bop-tourism.com</a> — GoSetups / BeAlien / Hymo setup-shop benchmarks · Latest BoP patch V1.3.3.2 (Jun 2026) · Times are optimised qualifying laps, not race pace. Rankings shift with each BoP patch.</div>';
+}
+
+
+function calcGT3TyreAvg() {
+  const vals = ['g-tyre-fl','g-tyre-fr','g-tyre-rl','g-tyre-rr']
+    .map(id => parseFloat(document.getElementById(id).value))
+    .filter(v => !isNaN(v));
+  if (vals.length === 0) {
+    document.getElementById('g-tyre-avg').textContent = '--';
+    document.getElementById('g-tyre-cond').value = '';
+    return;
+  }
+  const avg = (vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(1);
+  document.getElementById('g-tyre-avg').textContent = avg + '%';
+  document.getElementById('g-tyre-cond').value = avg;
+}
+
+function calcHYPTyreAvg() {
+  const vals = ['h-tyre-fl','h-tyre-fr','h-tyre-rl','h-tyre-rr']
+    .map(id => parseFloat(document.getElementById(id).value))
+    .filter(v => !isNaN(v));
+  if (vals.length === 0) {
+    document.getElementById('h-tyre-avg').textContent = '--';
+    document.getElementById('h-tyre-cond').value = '';
+    return;
+  }
+  const avg = (vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(1);
+  document.getElementById('h-tyre-avg').textContent = avg + '%';
+  document.getElementById('h-tyre-cond').value = avg;
+}
+
+// ══════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════
+renderGT3Dashboard();
+</script>
+</body>
+</html>
