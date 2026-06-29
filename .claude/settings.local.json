@@ -6,7 +6,12 @@
       "Bash(git init *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(gh auth *)",
+      "PowerShell(gh auth status)",
+      "PowerShell(& \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" auth status)",
+      "PowerShell($env:PATH += \";C:\\\\Program Files\\\\Git\\\\bin;C:\\\\Program Files\\\\Git\\\\cmd\"; Set-Location \"C:\\\\Users\\\\Lane\\\\Desktop\\\\CCR APP\"; & \"C:\\\\Program Files\\\\GitHub CLI\\\\gh.exe\" repo create \"CCR-APP\" --public --source=. --remote=origin --push)",
+      "Bash(git push *)"
     ]
   }
 }
