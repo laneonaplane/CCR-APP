@@ -150,6 +150,7 @@
     <button class="nav-btn" onclick="showPage('gt3','submit',this)">Log Test</button>
     <button class="nav-btn" onclick="showPage('gt3','rankings',this)">Rankings</button>
     <button class="nav-btn" onclick="showPage('gt3','sessions',this)">Sessions</button>
+    <button class="nav-btn" onclick="showPage('gt3','driverrankings',this)">Driver Rankings</button>
     <button class="nav-btn" onclick="showPage('gt3','reference',this)">Car Reference</button>
   </div>
   <div class="main">
@@ -185,16 +186,17 @@
         <div class="form-grid">
           <div class="form-group"><label>Driver</label><input type="text" id="g-driver" placeholder="Your name"></div>
           <div class="form-group"><label>Driver level</label>
-            <select id="g-level"><option value="elite">Elite (×1.2)</option><option value="advanced">Advanced (×1.1)</option><option value="intermediate" selected>Intermediate (×1.0)</option><option value="developing">Developing (×0.9)</option><option value="novice">Novice (×0.8)</option></select>
+            <select id="g-level" onchange="updateGT3Tier()"><option value="elite">Elite (×1.2)</option><option value="advanced">Advanced (×1.1)</option><option value="intermediate" selected>Intermediate (×1.0)</option><option value="developing">Developing (×0.9)</option><option value="novice">Novice (×0.8)</option></select>
+            <div id="g-tier-badge" style="margin-top:8px"><span style="color:var(--muted);font-size:12px">Enter best lap + track + car to see tier</span></div>
           </div>
           <div class="form-group"><label>Track</label>
-            <select id="g-track">
+            <select id="g-track" onchange="updateGT3Tier()">
               <option value="">Select track...</option>
               <option>Circuit de la Sarthe</option><option>Spa-Francorchamps</option><option>Monza</option><option>Silverstone</option><option>Nürburgring</option><option>Fuji Speedway</option><option>Portimão</option><option>Bahrain</option><option>São Paulo</option><option>Austin (COTA)</option><option>Imola</option><option>Lusail</option>
             </select>
           </div>
           <div class="form-group"><label>Car</label>
-            <select id="g-car">
+            <select id="g-car" onchange="updateGT3Tier()">
               <option value="">Select car...</option>
               <option>Aston Martin Vantage AMR GT3 Evo</option><option>BMW M4 GT3</option><option>Ferrari 296 GT3</option><option>Ford Mustang GT3</option><option>Lamborghini Huracán GT3 Evo2</option><option>McLaren 720S GT3 Evo</option><option>Mercedes-AMG GT3 Evo</option><option>Porsche 911 GT3 R (992)</option><option>Chevrolet Corvette Z06 GT3.R</option>
             </select>
@@ -204,8 +206,8 @@
         </div>
         <div class="form-section-title">Lap data</div>
         <div class="form-grid">
-          <div class="form-group"><label>Best lap (M:SS.mmm)</label><input type="text" id="g-best" placeholder="1:58.432"></div>
-          <div class="form-group"><label>Average lap (M:SS.mmm)</label><input type="text" id="g-avg" placeholder="2:01.154"></div>
+          <div class="form-group"><label>Best lap (M:SS.mmm)</label><input type="text" id="g-best" placeholder="1:58.432" oninput="updateGT3Tier()"></div>
+          <div class="form-group"><label>Average lap (M:SS.mmm)</label><input type="text" id="g-avg" placeholder="2:01.154" oninput="updateGT3Tier()"></div>
           <div class="form-group"><label>Laps completed</label><input type="number" id="g-laps" placeholder="20" min="1"></div>
           <div class="form-group"><label>Fuel load (L)</label><input type="number" id="g-fuel" placeholder="65"></div>
           <div class="form-group"><label>Tyre compound</label><select id="g-tyre"><option>Soft</option><option>Medium</option><option>Hard</option><option>Intermediate</option><option>Wet</option></select></div>
@@ -275,6 +277,22 @@
       <div class="card"><div id="g-sessions-wrap"></div></div>
     </div>
 
+    <!-- GT3 DRIVER RANKINGS -->
+    <div class="page" id="gt3-page-driverrankings">
+      <div class="section-label">LMGT3 · Driver rankings vs benchmark</div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--muted)">Track:</span>
+          <select id="g-dr-track" onchange="renderGT3DriverRankings()" style="width:220px">
+            <option value="all">All tracks (best session per driver)</option>
+            <option>Circuit de la Sarthe</option><option>Spa-Francorchamps</option><option>Monza</option><option>Silverstone</option><option>Nürburgring</option><option>Fuji Speedway</option><option>Portimão</option><option>Bahrain</option><option>São Paulo</option><option>Austin (COTA)</option><option>Imola</option><option>Lusail</option>
+          </select>
+          <span style="font-size:12px;color:var(--muted);margin-left:auto">vs Ohne Speed's LMU benchmark · v1.33</span>
+        </div>
+      </div>
+      <div class="card"><div id="g-driver-rankings-wrap"></div></div>
+    </div>
+
     <!-- GT3 REFERENCE -->
     <div class="page" id="gt3-page-reference">
       <div class="section-label">LMGT3 · Car reference by track</div>
@@ -295,6 +313,7 @@
     <button class="nav-btn" onclick="showPage('hyp','submit',this)">Log Test</button>
     <button class="nav-btn" onclick="showPage('hyp','rankings',this)">Rankings</button>
     <button class="nav-btn" onclick="showPage('hyp','sessions',this)">Sessions</button>
+    <button class="nav-btn" onclick="showPage('hyp','driverrankings',this)">Driver Rankings</button>
     <button class="nav-btn" onclick="showPage('hyp','reference',this)">Car Reference</button>
   </div>
   <div class="main">
@@ -330,16 +349,17 @@
         <div class="form-grid">
           <div class="form-group"><label>Driver</label><input type="text" id="h-driver" placeholder="Your name"></div>
           <div class="form-group"><label>Driver level</label>
-            <select id="h-level"><option value="elite">Elite (×1.2)</option><option value="advanced">Advanced (×1.1)</option><option value="intermediate" selected>Intermediate (×1.0)</option><option value="developing">Developing (×0.9)</option><option value="novice">Novice (×0.8)</option></select>
+            <select id="h-level" onchange="updateHYPTier()"><option value="elite">Elite (×1.2)</option><option value="advanced">Advanced (×1.1)</option><option value="intermediate" selected>Intermediate (×1.0)</option><option value="developing">Developing (×0.9)</option><option value="novice">Novice (×0.8)</option></select>
+            <div id="h-tier-badge" style="margin-top:8px"><span style="color:var(--muted);font-size:12px">Enter best lap + track + car to see tier</span></div>
           </div>
           <div class="form-group"><label>Track</label>
-            <select id="h-track">
+            <select id="h-track" onchange="updateHYPTier()">
               <option value="">Select track...</option>
               <option>Circuit de la Sarthe (Le Mans)</option><option>Imola</option><option>Spa-Francorchamps</option><option>Fuji Speedway</option><option>Bahrain International Circuit</option><option>Lusail (Qatar)</option><option>Interlagos (São Paulo)</option><option>COTA (Austin)</option><option>Sebring</option><option>Monza</option><option>Portimão</option><option>Silverstone</option>
             </select>
           </div>
           <div class="form-group"><label>Car</label>
-            <select id="h-car">
+            <select id="h-car" onchange="updateHYPTier()">
               <option value="">Select car...</option>
               <optgroup label="LMH"><option>Ferrari 499P</option><option>Toyota GR010 Hybrid</option><option>Peugeot 9X8 EVO (2024)</option><option>Peugeot 9X8 (2023 wingless)</option><option>Aston Martin Valkyrie AMR-LMH</option><option>Glickenhaus 007 LMH</option><option>Isotta Fraschini Tipo 6 LMH-C</option></optgroup>
               <optgroup label="LMDh"><option>Porsche 963</option><option>Cadillac V-Series.R</option><option>BMW M Hybrid V8</option><option>Alpine A424</option><option>Lamborghini SC63</option><option>Genesis GMR-001</option></optgroup>
@@ -350,8 +370,8 @@
         </div>
         <div class="form-section-title">Lap data</div>
         <div class="form-grid">
-          <div class="form-group"><label>Best lap (M:SS.mmm)</label><input type="text" id="h-best" placeholder="3:27.500"></div>
-          <div class="form-group"><label>Average lap (M:SS.mmm)</label><input type="text" id="h-avg" placeholder="3:29.100"></div>
+          <div class="form-group"><label>Best lap (M:SS.mmm)</label><input type="text" id="h-best" placeholder="3:27.500" oninput="updateHYPTier()"></div>
+          <div class="form-group"><label>Average lap (M:SS.mmm)</label><input type="text" id="h-avg" placeholder="3:29.100" oninput="updateHYPTier()"></div>
           <div class="form-group"><label>Benchmark / target (M:SS.mmm)</label><input type="text" id="h-bench" placeholder="3:26.000"></div>
           <div class="form-group"><label>Laps completed</label><input type="number" id="h-laps" placeholder="24" min="1"></div>
           <div class="form-group"><label>Tyre compound</label><select id="h-tyre"><option>Soft</option><option>Medium</option><option>Hard</option><option>Intermediate</option><option>Wet</option></select></div>
@@ -421,6 +441,22 @@
       <div class="card"><div id="h-sessions-wrap"></div></div>
     </div>
 
+    <!-- HYP DRIVER RANKINGS -->
+    <div class="page" id="hyp-page-driverrankings">
+      <div class="section-label">Hypercar · Driver rankings vs benchmark</div>
+      <div class="card" style="margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:13px;color:var(--muted)">Track:</span>
+          <select id="h-dr-track" onchange="renderHYPDriverRankings()" style="width:260px">
+            <option value="all">All tracks (best session per driver)</option>
+            <option>Circuit de la Sarthe (Le Mans)</option><option>Imola</option><option>Spa-Francorchamps</option><option>Fuji Speedway</option><option>Bahrain International Circuit</option><option>Lusail (Qatar)</option><option>Interlagos (São Paulo)</option><option>COTA (Austin)</option><option>Sebring</option><option>Monza</option><option>Portimão</option><option>Silverstone</option>
+          </select>
+          <span style="font-size:12px;color:var(--muted);margin-left:auto">vs Ohne Speed's LMU benchmark · v1.33</span>
+        </div>
+      </div>
+      <div class="card"><div id="h-driver-rankings-wrap"></div></div>
+    </div>
+
     <!-- HYP REFERENCE -->
     <div class="page" id="hyp-page-reference">
       <div class="section-label">Hypercar · Car reference by track — LMU in-game data</div>
@@ -437,6 +473,85 @@
 //  DATA
 // ══════════════════════════════════════════════════════════
 const WEIGHTS = {elite:1.2,advanced:1.1,intermediate:1.0,developing:0.9,novice:0.8};
+
+// ── BENCHMARK REFERENCE TIMES (Ohne Speed's LMU spreadsheet, patch v1.33) ──
+// Times in seconds. Per-car where available, else class fastest as fallback.
+const BENCHMARKS = {
+  gt3: {
+    'Circuit de la Sarthe': { ref:234.649, cars:{} },
+    'Spa-Francorchamps':    { ref:136.864, cars:{} },
+    'Monza': { ref:108.135, cars:{ 'Lamborghini Huracán GT3 Evo2':108.135,'Porsche 911 GT3 R (992)':108.463,'McLaren 720S GT3 Evo':108.473,'BMW M4 GT3':108.634,'Chevrolet Corvette Z06 GT3.R':108.669,'Ferrari 296 GT3':108.680,'Ford Mustang GT3':108.718,'Mercedes-AMG GT3 Evo':108.735 }},
+    'Silverstone': { ref:117.682, cars:{ 'Chevrolet Corvette Z06 GT3.R':117.682,'Lamborghini Huracán GT3 Evo2':117.768,'Ford Mustang GT3':117.861,'Ferrari 296 GT3':117.869,'BMW M4 GT3':117.948,'Mercedes-AMG GT3 Evo':117.993,'Aston Martin Vantage AMR GT3 Evo':118.008,'McLaren 720S GT3 Evo':118.070,'Porsche 911 GT3 R (992)':118.099 }},
+    'Fuji Speedway': { ref:99.591, cars:{ 'Lamborghini Huracán GT3 Evo2':99.591,'Chevrolet Corvette Z06 GT3.R':99.700,'Ferrari 296 GT3':99.910,'Mercedes-AMG GT3 Evo':99.989,'BMW M4 GT3':100.012,'Ford Mustang GT3':100.013,'Aston Martin Vantage AMR GT3 Evo':100.029,'McLaren 720S GT3 Evo':100.049 }},
+    'Portimão': { ref:102.913, cars:{ 'Lamborghini Huracán GT3 Evo2':102.913,'BMW M4 GT3':103.015,'Mercedes-AMG GT3 Evo':103.050,'Chevrolet Corvette Z06 GT3.R':103.150,'Ferrari 296 GT3':103.167,'Porsche 911 GT3 R (992)':103.262,'Aston Martin Vantage AMR GT3 Evo':103.395,'McLaren 720S GT3 Evo':103.621 }},
+    'Bahrain': { ref:118.222, cars:{ 'Lamborghini Huracán GT3 Evo2':118.222,'Chevrolet Corvette Z06 GT3.R':118.391,'Ford Mustang GT3':118.506,'Porsche 911 GT3 R (992)':118.612,'Ferrari 296 GT3':118.697,'BMW M4 GT3':118.723,'Mercedes-AMG GT3 Evo':118.742,'Aston Martin Vantage AMR GT3 Evo':118.777,'McLaren 720S GT3 Evo':118.949 }},
+    'São Paulo': { ref:93.173, cars:{ 'BMW M4 GT3':93.173,'Ford Mustang GT3':93.217,'McLaren 720S GT3 Evo':93.329,'Chevrolet Corvette Z06 GT3.R':93.394,'Mercedes-AMG GT3 Evo':93.464,'Porsche 911 GT3 R (992)':93.476,'Aston Martin Vantage AMR GT3 Evo':93.574,'Lamborghini Huracán GT3 Evo2':93.628,'Ferrari 296 GT3':93.682 }},
+    'Austin (COTA)': { ref:125.475, cars:{ 'Ford Mustang GT3':125.475,'Mercedes-AMG GT3 Evo':125.511,'Ferrari 296 GT3':125.609,'BMW M4 GT3':125.621,'McLaren 720S GT3 Evo':125.886 }},
+    'Imola': { ref:101.716, cars:{ 'Porsche 911 GT3 R (992)':101.716,'BMW M4 GT3':101.738,'Lamborghini Huracán GT3 Evo2':101.755,'Ferrari 296 GT3':101.818,'Mercedes-AMG GT3 Evo':101.820,'Ford Mustang GT3':101.871,'McLaren 720S GT3 Evo':102.280 }},
+    'Lusail': { ref:113.387, cars:{ 'Ferrari 296 GT3':113.387,'Aston Martin Vantage AMR GT3 Evo':113.605,'Ford Mustang GT3':113.853,'Mercedes-AMG GT3 Evo':114.088,'BMW M4 GT3':114.116,'Lamborghini Huracán GT3 Evo2':114.233 }}
+  },
+  hyp: {
+    'Circuit de la Sarthe (Le Mans)': { ref:202.907, cars:{ 'BMW M Hybrid V8':202.907,'Lamborghini SC63':202.936,'Ferrari 499P':203.205,'Cadillac V-Series.R':203.278,'Toyota GR010 Hybrid':203.353,'Porsche 963':203.371,'Alpine A424':203.415,'Genesis GMR-001':203.484,'Peugeot 9X8 EVO (2024)':203.496,'Aston Martin Valkyrie AMR-LMH':203.552,'Isotta Fraschini Tipo 6 LMH-C':203.777 }},
+    'Imola': { ref:89.379, cars:{ 'Genesis GMR-001':89.379,'Cadillac V-Series.R':89.385,'BMW M Hybrid V8':89.412,'Toyota GR010 Hybrid':89.542,'Alpine A424':89.614,'Ferrari 499P':89.648,'Porsche 963':89.649,'Peugeot 9X8 EVO (2024)':89.765,'Peugeot 9X8 (2023 wingless)':89.888,'Aston Martin Valkyrie AMR-LMH':90.151 }},
+    'Spa-Francorchamps': { ref:118.336, cars:{} },
+    'Fuji Speedway': { ref:87.989, cars:{ 'Lamborghini SC63':87.989,'Genesis GMR-001':88.182,'Porsche 963':88.211,'Toyota GR010 Hybrid':88.327,'Ferrari 499P':88.331,'Isotta Fraschini Tipo 6 LMH-C':88.358,'Peugeot 9X8 EVO (2024)':88.484,'Aston Martin Valkyrie AMR-LMH':88.490,'Alpine A424':88.571 }},
+    'Bahrain International Circuit': { ref:105.103, cars:{ 'Genesis GMR-001':105.103,'Peugeot 9X8 EVO (2024)':105.205,'Toyota GR010 Hybrid':105.422,'Ferrari 499P':105.433,'BMW M Hybrid V8':105.451,'Aston Martin Valkyrie AMR-LMH':105.484,'Porsche 963':105.490,'Isotta Fraschini Tipo 6 LMH-C':105.536,'Alpine A424':105.561 }},
+    'Lusail (Qatar)': { ref:97.675, cars:{} },
+    'Interlagos (São Paulo)': { ref:82.334, cars:{ 'Genesis GMR-001':82.334,'Peugeot 9X8 EVO (2024)':82.494,'Toyota GR010 Hybrid':82.561,'Ferrari 499P':82.610,'Lamborghini SC63':82.649,'Alpine A424':82.666,'Porsche 963':82.686,'Aston Martin Valkyrie AMR-LMH':82.793,'Cadillac V-Series.R':82.845 }},
+    'COTA (Austin)': { ref:111.546, cars:{ 'Ferrari 499P':111.546,'Toyota GR010 Hybrid':111.641,'Genesis GMR-001':111.687,'Peugeot 9X8 EVO (2024)':112.203,'Peugeot 9X8 (2023 wingless)':112.227,'Alpine A424':112.304,'Aston Martin Valkyrie AMR-LMH':112.410 }},
+    'Monza': { ref:94.721, cars:{ 'Lamborghini SC63':94.721,'Porsche 963':94.723,'Isotta Fraschini Tipo 6 LMH-C':94.751,'Toyota GR010 Hybrid':94.751,'Peugeot 9X8 EVO (2024)':94.775,'Cadillac V-Series.R':94.794,'BMW M Hybrid V8':94.887,'Ferrari 499P':94.911,'Genesis GMR-001':94.987,'Aston Martin Valkyrie AMR-LMH':95.045,'Alpine A424':95.141 }},
+    'Portimão': { ref:90.934, cars:{ 'Genesis GMR-001':90.934,'Peugeot 9X8 EVO (2024)':90.968,'Ferrari 499P':91.101,'Alpine A424':91.130,'Aston Martin Valkyrie AMR-LMH':91.357,'Toyota GR010 Hybrid':91.382,'Porsche 963':91.482,'Cadillac V-Series.R':91.512 }},
+    'Silverstone': { ref:102.216, cars:{ 'Toyota GR010 Hybrid':102.216,'Porsche 963':102.265,'Ferrari 499P':102.377,'Lamborghini SC63':102.480,'Peugeot 9X8 (2023 wingless)':102.506,'Alpine A424':102.554,'Peugeot 9X8 EVO (2024)':102.555,'Aston Martin Valkyrie AMR-LMH':102.580,'Genesis GMR-001':102.790 }}
+  }
+};
+
+function getBenchRef(cls, track, car) {
+  const td = BENCHMARKS[cls] && BENCHMARKS[cls][track];
+  if (!td) return null;
+  return (td.cars && td.cars[car]) || td.ref;
+}
+function getTier(pct) {
+  if (pct === null || pct === undefined) return null;
+  if (pct <= 1.0)  return { label:'Alien',       color:'#e8ff47', bg:'rgba(232,255,71,0.12)' };
+  if (pct <= 2.5)  return { label:'Competitive', color:'#4ade80', bg:'rgba(74,222,128,0.1)' };
+  if (pct <= 4.0)  return { label:'Good',        color:'#60a5fa', bg:'rgba(96,165,250,0.1)' };
+  if (pct <= 7.0)  return { label:'Midpack',     color:'#f59e0b', bg:'rgba(245,158,11,0.1)' };
+  return              { label:'Tail-ender',  color:'#ef4444', bg:'rgba(239,68,68,0.1)' };
+}
+function getLapTierInfo(cls, track, car, lapStr) {
+  const ref = getBenchRef(cls, track, car);
+  const lapSec = parseLap(lapStr);
+  if (!ref || !lapSec || lapSec <= 0) return null;
+  const pct = ((lapSec - ref) / ref) * 100;
+  return { pct: Math.round(pct * 100) / 100, tier: getTier(pct) };
+}
+function tierBadgeHtml(ti) {
+  if (!ti) return '';
+  const sign = ti.pct >= 0 ? '+' : '';
+  return `<span style="background:${ti.tier.bg};color:${ti.tier.color};border:1px solid ${ti.tier.color}55;border-radius:20px;padding:3px 12px;font-size:11px;font-family:var(--font);font-weight:600">${ti.tier.label}</span><span style="font-size:12px;color:var(--muted);margin-left:8px">${sign}${ti.pct.toFixed(2)}% vs ref</span>`;
+}
+function updateGT3Tier() {
+  const track=document.getElementById('g-track').value, car=document.getElementById('g-car').value;
+  const best=document.getElementById('g-best').value, avg=document.getElementById('g-avg').value;
+  const badge=document.getElementById('g-tier-badge');
+  const tiBest=getLapTierInfo('gt3',track,car,best), tiAvg=getLapTierInfo('gt3',track,car,avg);
+  if(!tiBest && !tiAvg){badge.innerHTML='<span style="color:var(--muted);font-size:12px">Enter best lap + track + car to see tier</span>';return;}
+  let html='';
+  if(tiBest) html+=`<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted);margin-right:6px">BEST</span>${tierBadgeHtml(tiBest)}</div>`;
+  if(tiAvg)  html+=`<div><span style="font-size:11px;color:var(--muted);margin-right:8px">AVG</span>${tierBadgeHtml(tiAvg)}</div>`;
+  badge.innerHTML=html;
+}
+function updateHYPTier() {
+  const track=document.getElementById('h-track').value, car=document.getElementById('h-car').value;
+  const best=document.getElementById('h-best').value, avg=document.getElementById('h-avg').value;
+  const badge=document.getElementById('h-tier-badge');
+  const tiBest=getLapTierInfo('hyp',track,car,best), tiAvg=getLapTierInfo('hyp',track,car,avg);
+  if(!tiBest && !tiAvg){badge.innerHTML='<span style="color:var(--muted);font-size:12px">Enter best lap + track + car to see tier</span>';return;}
+  let html='';
+  if(tiBest) html+=`<div style="margin-bottom:4px"><span style="font-size:11px;color:var(--muted);margin-right:6px">BEST</span>${tierBadgeHtml(tiBest)}</div>`;
+  if(tiAvg)  html+=`<div><span style="font-size:11px;color:var(--muted);margin-right:8px">AVG</span>${tierBadgeHtml(tiAvg)}</div>`;
+  badge.innerHTML=html;
+}
 
 const GT3_COLORS = {
   'Aston Martin Vantage AMR GT3 Evo':'#006633','BMW M4 GT3':'#0066cc',
@@ -569,9 +684,10 @@ function showPage(cls, id, btn) {
   document.getElementById(`${prefix}-page-${id}`).classList.add('active');
   if(btn) btn.classList.add('active');
   if(id==='dashboard') cls==='gt3'?renderGT3Dashboard():renderHYPDashboard();
-  if(id==='rankings')  cls==='gt3'?renderGT3Rankings():renderHYPRankings();
-  if(id==='sessions')  cls==='gt3'?renderGT3Sessions():renderHYPSessions();
-  if(id==='reference') cls==='gt3'?renderGT3Reference():renderHYPReference();
+  if(id==='rankings')       cls==='gt3'?renderGT3Rankings():renderHYPRankings();
+  if(id==='sessions')       cls==='gt3'?renderGT3Sessions():renderHYPSessions();
+  if(id==='driverrankings') cls==='gt3'?renderGT3DriverRankings():renderHYPDriverRankings();
+  if(id==='reference')      cls==='gt3'?renderGT3Reference():renderHYPReference();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -624,9 +740,11 @@ function submitGT3() {
   if(!driver||!track||!car||!best){showToast('Fill in driver, track, car, and best lap',true);return;}
   const s={id:Date.now(),date:new Date().toISOString(),driver,level:document.getElementById('g-level').value,track,car,sessionType:document.getElementById('g-session').value,weather:document.getElementById('g-weather').value,best,avg:document.getElementById('g-avg').value,laps:document.getElementById('g-laps').value,fuel:document.getElementById('g-fuel').value,tyre:document.getElementById('g-tyre').value,tyreCond:document.getElementById('g-tyre-cond').value,tyreFl:document.getElementById('g-tyre-fl').value,tyreFr:document.getElementById('g-tyre-fr').value,tyreRl:document.getElementById('g-tyre-rl').value,tyreRr:document.getElementById('g-tyre-rr').value,offtracks:document.getElementById('g-offtracks').value,lockups:document.getElementById('g-lockups').value,spins:document.getElementById('g-spins').value,confidence:document.getElementById('g-confidence').value,setup:document.getElementById('g-setup').value,comments:document.getElementById('g-comments').value};
   s.score=calcGT3Score(s);
+  const gti=getLapTierInfo('gt3',s.track,s.car,s.best); s.tier=gti?gti.tier.label:null; s.benchPct=gti?gti.pct:null;
+  const gtiAvg=getLapTierInfo('gt3',s.track,s.car,s.avg); s.tierAvg=gtiAvg?gtiAvg.tier.label:null; s.benchPctAvg=gtiAvg?gtiAvg.pct:null;
   gt3Sessions.unshift(s);
   localStorage.setItem('ccr_gt3_sessions',JSON.stringify(gt3Sessions));
-  showToast('LMGT3 session logged — score: '+s.score);
+  showToast('LMGT3 session logged — score: '+s.score+(s.tier?' · '+s.tier:''));
   showPage('gt3','dashboard',document.querySelector('#nav-gt3 .nav-btn'));
 }
 
@@ -660,9 +778,11 @@ function submitHYP() {
   if(!driver||!track||!car||!best||!bench){showToast('Fill in driver, track, car, best lap, and benchmark',true);return;}
   const s={id:Date.now(),date:new Date().toISOString(),driver,level:document.getElementById('h-level').value,track,car,sessionType:document.getElementById('h-session').value,weather:document.getElementById('h-weather').value,best,avg:document.getElementById('h-avg').value,bench,laps:document.getElementById('h-laps').value,tyre:document.getElementById('h-tyre').value,tyreCond:document.getElementById('h-tyre-cond').value,tyreFl:document.getElementById('h-tyre-fl').value,tyreFr:document.getElementById('h-tyre-fr').value,tyreRl:document.getElementById('h-tyre-rl').value,tyreRr:document.getElementById('h-tyre-rr').value,offtracks:document.getElementById('h-offtracks').value,lockups:document.getElementById('h-lockups').value,spins:document.getElementById('h-spins').value,confidence:document.getElementById('h-confidence').value,setup:document.getElementById('h-setup').value,comments:document.getElementById('h-comments').value};
   s.score=calcHYPScore(s);
+  const hti=getLapTierInfo('hyp',s.track,s.car,s.best); s.tier=hti?hti.tier.label:null; s.benchPct=hti?hti.pct:null;
+  const htiAvg=getLapTierInfo('hyp',s.track,s.car,s.avg); s.tierAvg=htiAvg?htiAvg.tier.label:null; s.benchPctAvg=htiAvg?htiAvg.pct:null;
   hypSessions.unshift(s);
   localStorage.setItem('ccr_hyp_sessions',JSON.stringify(hypSessions));
-  showToast('Hypercar session logged — score: '+s.score);
+  showToast('Hypercar session logged — score: '+s.score+(s.tier?' · '+s.tier:''));
   showPage('hyp','dashboard',document.querySelector('#nav-hyp .nav-btn'));
 }
 
@@ -714,16 +834,23 @@ function renderGT3Rankings(){
 function renderGT3Sessions(){
   const el=document.getElementById('g-sessions-wrap');
   if(!gt3Sessions.length){el.innerHTML='<div class="empty">No sessions logged yet.</div>';return;}
-  el.innerHTML=`<table class="rank-table"><thead><tr><th>Date</th><th>Driver</th><th>Track</th><th>Car</th><th>Best Lap</th><th>Avg Lap</th><th>Score</th><th>Weather</th></tr></thead><tbody>${
-    gt3Sessions.map(s=>`<tr>
-      <td style="color:var(--muted);font-size:12px">${new Date(s.date).toLocaleDateString()}</td>
-      <td>${s.driver}</td><td style="font-size:13px">${s.track}</td>
-      <td><span class="car-dot" style="background:${GT3_COLORS[s.car]||'#666'};margin-right:6px"></span><span style="font-size:13px">${s.car.split(' ').slice(0,3).join(' ')}</span></td>
-      <td><span style="font-family:var(--font);font-size:13px">${fmtLap(parseLap(s.best))}</span></td>
-      <td><span style="font-family:var(--font);font-size:13px;color:var(--muted)">${s.avg?fmtLap(parseLap(s.avg)):'—'}</span></td>
-      <td><span style="font-family:var(--font);color:var(--accent)">${s.score}</span></td>
-      <td style="font-size:12px;color:var(--muted)">${s.weather}</td>
-    </tr>`).join('')
+  const TC={Alien:'#e8ff47',Competitive:'#4ade80',Good:'#60a5fa',Midpack:'#f59e0b','Tail-ender':'#ef4444'};
+  el.innerHTML=`<table class="rank-table"><thead><tr><th>Date</th><th>Driver</th><th>Track</th><th>Car</th><th>Best Lap</th><th>Avg Lap</th><th>Tier</th><th>Score</th></tr></thead><tbody>${
+    gt3Sessions.map(s=>{
+      const ti=s.tier||getLapTierInfo('gt3',s.track,s.car,s.best)?.tier.label;
+      const pct=s.benchPct??getLapTierInfo('gt3',s.track,s.car,s.best)?.pct;
+      const tc=TC[ti]||'var(--muted)';
+      const sign=pct>=0?'+':'';
+      return `<tr>
+        <td style="color:var(--muted);font-size:12px">${new Date(s.date).toLocaleDateString()}</td>
+        <td>${s.driver}</td><td style="font-size:13px">${s.track}</td>
+        <td><span class="car-dot" style="background:${GT3_COLORS[s.car]||'#666'};margin-right:6px"></span><span style="font-size:13px">${s.car.split(' ').slice(0,3).join(' ')}</span></td>
+        <td><span style="font-family:var(--font);font-size:13px">${fmtLap(parseLap(s.best))}</span></td>
+        <td><span style="font-family:var(--font);font-size:13px;color:var(--muted)">${s.avg?fmtLap(parseLap(s.avg)):'—'}</span></td>
+        <td>${ti?`<span style="background:${tc}22;color:${tc};border:1px solid ${tc}44;border-radius:20px;padding:2px 8px;font-size:11px;font-family:var(--font)">${ti}</span>${pct!=null?`<span style="font-size:11px;color:var(--muted);margin-left:4px">${sign}${pct.toFixed(2)}%</span>`:''}` : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+        <td><span style="font-family:var(--font);color:var(--accent)">${s.score}</span></td>
+      </tr>`;
+    }).join('')
   }</tbody></table>`;
 }
 function renderGT3Reference(){
@@ -790,16 +917,23 @@ function renderHYPRankings(){
 function renderHYPSessions(){
   const el=document.getElementById('h-sessions-wrap');
   if(!hypSessions.length){el.innerHTML='<div class="empty">No sessions logged yet.</div>';return;}
-  el.innerHTML=`<table class="rank-table"><thead><tr><th>Date</th><th>Driver</th><th>Track</th><th>Car</th><th>Best Lap</th><th>Avg Lap</th><th>Benchmark</th><th>Score</th></tr></thead><tbody>${
-    hypSessions.map(s=>`<tr>
-      <td style="color:var(--muted);font-size:12px">${new Date(s.date).toLocaleDateString()}</td>
-      <td>${s.driver}</td><td style="font-size:13px">${s.track}</td>
-      <td><span class="car-dot" style="background:${HYP_COLORS[s.car]||'#666'};margin-right:6px"></span><span style="font-size:13px">${s.car.split(' ').slice(0,3).join(' ')}</span></td>
-      <td><span style="font-family:var(--font);font-size:13px">${fmtLap(parseLap(s.best))}</span></td>
-      <td><span style="font-family:var(--font);font-size:13px;color:var(--muted)">${s.avg?fmtLap(parseLap(s.avg)):'—'}</span></td>
-      <td><span style="font-family:var(--font);font-size:13px;color:var(--muted)">${s.bench?fmtLap(parseLap(s.bench)):'—'}</span></td>
-      <td><span style="font-family:var(--font);color:var(--hyp)">${s.score}</span></td>
-    </tr>`).join('')
+  const HTC={Alien:'#e8ff47',Competitive:'#4ade80',Good:'#60a5fa',Midpack:'#f59e0b','Tail-ender':'#ef4444'};
+  el.innerHTML=`<table class="rank-table"><thead><tr><th>Date</th><th>Driver</th><th>Track</th><th>Car</th><th>Best Lap</th><th>Avg Lap</th><th>Tier</th><th>Score</th></tr></thead><tbody>${
+    hypSessions.map(s=>{
+      const ti=s.tier||getLapTierInfo('hyp',s.track,s.car,s.best)?.tier.label;
+      const pct=s.benchPct??getLapTierInfo('hyp',s.track,s.car,s.best)?.pct;
+      const tc=HTC[ti]||'var(--muted)';
+      const sign=pct>=0?'+':'';
+      return `<tr>
+        <td style="color:var(--muted);font-size:12px">${new Date(s.date).toLocaleDateString()}</td>
+        <td>${s.driver}</td><td style="font-size:13px">${s.track}</td>
+        <td><span class="car-dot" style="background:${HYP_COLORS[s.car]||'#666'};margin-right:6px"></span><span style="font-size:13px">${s.car.split(' ').slice(0,3).join(' ')}</span></td>
+        <td><span style="font-family:var(--font);font-size:13px">${fmtLap(parseLap(s.best))}</span></td>
+        <td><span style="font-family:var(--font);font-size:13px;color:var(--muted)">${s.avg?fmtLap(parseLap(s.avg)):'—'}</span></td>
+        <td>${ti?`<span style="background:${tc}22;color:${tc};border:1px solid ${tc}44;border-radius:20px;padding:2px 8px;font-size:11px;font-family:var(--font)">${ti}</span>${pct!=null?`<span style="font-size:11px;color:var(--muted);margin-left:4px">${sign}${pct.toFixed(2)}%</span>`:''}` : '<span style="color:var(--muted);font-size:12px">—</span>'}</td>
+        <td><span style="font-family:var(--font);color:var(--hyp)">${s.score}</span></td>
+      </tr>`;
+    }).join('')
   }</tbody></table>`;
 }
 function renderHYPReference(){
@@ -818,6 +952,66 @@ function renderHYPReference(){
   ).join('')+'<div class="ref-source-bar">Source: <a href="https://bop-tourism.com/car-strength/hypercar" target="_blank" style="color:var(--hyp)">bop-tourism.com</a> — GoSetups / BeAlien / Hymo setup-shop benchmarks · Latest BoP patch V1.3.3.2 (Jun 2026) · Times are optimised qualifying laps, not race pace. Rankings shift with each BoP patch.</div>';
 }
 
+
+// ══════════════════════════════════════════════════════════
+//  DRIVER RANKINGS
+// ══════════════════════════════════════════════════════════
+function _buildDriverRankings(sessions, cls, track) {
+  const filtered = (track && track!=='all') ? sessions.filter(s=>s.track===track) : sessions;
+  const TIER_COLORS = {Alien:'#e8ff47',Competitive:'#4ade80',Good:'#60a5fa',Midpack:'#f59e0b','Tail-ender':'#ef4444'};
+  // Compute benchPct for each session on the fly if not stored
+  const withBench = filtered.map(s => {
+    if (s.benchPct != null) return s;
+    const ti = getLapTierInfo(cls, s.track, s.car, s.best);
+    return {...s, tier: ti?.tier.label, benchPct: ti?.pct};
+  });
+  // Per driver: keep best (lowest pct) session
+  const byDriver = {};
+  withBench.forEach(s => {
+    if (s.benchPct == null) return;
+    if (!byDriver[s.driver] || s.benchPct < byDriver[s.driver].benchPct)
+      byDriver[s.driver] = s;
+  });
+  const ranked = Object.values(byDriver).sort((a,b) => a.benchPct - b.benchPct);
+  // Drivers with no benchmark data
+  const allDrivers = [...new Set(withBench.map(s=>s.driver))];
+  const unranked = allDrivers.filter(d => !byDriver[d]);
+  return {ranked, unranked, TIER_COLORS};
+}
+function _driverRankingsHtml(ranked, unranked, TIER_COLORS, accentVar) {
+  if (!ranked.length && !unranked.length) return '<div class="empty">No sessions logged yet.</div>';
+  if (!ranked.length) return '<div class="empty">No benchmark data for these sessions — benchmark requires a track with reference times.</div>';
+  const rows = ranked.map((s,i) => {
+    const tc = TIER_COLORS[s.tier] || 'var(--muted)';
+    const sign = s.benchPct >= 0 ? '+' : '';
+    const rankColor = i===0 ? accentVar : i===1 ? '#c0c0c0' : i===2 ? '#cd7f32' : 'var(--muted)';
+    return `<tr>
+      <td><span class="rank-num" style="color:${rankColor}">${i+1}</span></td>
+      <td style="font-weight:500;font-size:14px">${s.driver}</td>
+      <td><span style="background:${tc}22;color:${tc};border:1px solid ${tc}44;border-radius:20px;padding:2px 10px;font-size:11px;font-family:var(--font);font-weight:600">${s.tier}</span></td>
+      <td><span style="font-family:var(--font);color:${s.benchPct<=1?'var(--accent2)':s.benchPct<=4?'var(--text)':'var(--danger)'}">${sign}${s.benchPct.toFixed(2)}%</span></td>
+      <td><span class="lap-chip">${fmtLap(parseLap(s.best))}</span>${s.avg?`<span class="lap-chip" style="margin-left:4px;color:var(--muted)">avg ${fmtLap(parseLap(s.avg))}</span>`:''}</td>
+      <td style="font-size:12px;color:var(--muted)">${s.track}</td>
+      <td style="font-size:12px;color:var(--muted)">${s.car.split(' ').slice(0,3).join(' ')}</td>
+    </tr>`;
+  }).join('');
+  const unrankedNote = unranked.length ? `<div style="font-size:12px;color:var(--muted);padding:10px 0">${unranked.join(', ')} — no benchmark available for their track/car combination</div>` : '';
+  return `<table class="rank-table"><thead><tr><th>#</th><th>Driver</th><th>Tier</th><th>vs Ref</th><th>Best Lap / Avg</th><th>Track</th><th>Car</th></tr></thead><tbody>${rows}</tbody></table>
+    ${unrankedNote}
+    <div style="font-size:11px;color:var(--muted);padding:8px 0 0">Source: Ohne Speed's LMU laptimes spreadsheet · patch v1.33 · % above car's reference lap time at that track</div>`;
+}
+function renderGT3DriverRankings() {
+  const track = document.getElementById('g-dr-track').value;
+  const el = document.getElementById('g-driver-rankings-wrap');
+  const {ranked, unranked, TIER_COLORS} = _buildDriverRankings(gt3Sessions, 'gt3', track);
+  el.innerHTML = _driverRankingsHtml(ranked, unranked, TIER_COLORS, 'var(--accent)');
+}
+function renderHYPDriverRankings() {
+  const track = document.getElementById('h-dr-track').value;
+  const el = document.getElementById('h-driver-rankings-wrap');
+  const {ranked, unranked, TIER_COLORS} = _buildDriverRankings(hypSessions, 'hyp', track);
+  el.innerHTML = _driverRankingsHtml(ranked, unranked, TIER_COLORS, 'var(--hyp)');
+}
 
 function calcGT3TyreAvg() {
   const vals = ['g-tyre-fl','g-tyre-fr','g-tyre-rl','g-tyre-rr']
